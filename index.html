@@ -100,6 +100,7 @@
   .ctl:focus { border-color: var(--p); box-shadow: 0 0 0 4px rgba(26,49,80,.1); }
   .ctl::placeholder { color: #94a3b8; }
   .notice { margin-bottom: 18px; border-left: 4px solid var(--a); background: var(--soft); border-radius: 10px; padding: 13px 16px; font-size: 16px; line-height: 1.7; color: var(--p); }
+  .notice .tel-in { color: var(--p); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
   .help { margin: -6px 0 16px; font-size: 16px; color: var(--muted); line-height: 1.7; }
   .drop { display: grid; place-items: center; gap: 4px; min-height: 130px; padding: 18px; border: 2px dashed #c3cedb; border-radius: 18px; background: #f8fafc; text-align: center; cursor: pointer; }
   .drop:hover { border-color: var(--p); background: var(--soft); }
@@ -111,6 +112,7 @@
   .choices { display: grid; gap: 10px; }
   @media (min-width: 640px) { .choices { grid-template-columns: repeat(3, 1fr); } }
   .choice { position: relative; display: grid; place-items: center; min-height: 56px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 14px; text-align: center; font-size: 17px; font-weight: 700; color: var(--muted); cursor: pointer; }
+  @media (min-width: 640px) { .choices.two { grid-template-columns: repeat(2, 1fr); max-width: 520px; } }
   .choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
   .choice.on { border-color: var(--p); background: var(--soft); color: var(--p); box-shadow: 0 0 0 1px var(--p); }
   .consent { display: flex; gap: 14px; align-items: flex-start; cursor: pointer; }
@@ -200,6 +202,8 @@
   .ok-msg { margin: 10px 0 0; font-size: 15px; font-weight: 700; color: var(--p); }
   .warn { margin: 10px 0 0; font-size: 15px; font-weight: 700; color: #9a5b00; }
   .fields { margin-top: 18px; overflow: hidden; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
+  .en-box { border-top: 1px dashed #e3d2b3; padding-top: 16px; }
+  .en-box h3 { margin: 0; font-size: 17px; }
   .mini { margin-left: 8px; border: 1px solid #c3cedb; background: #fff; border-radius: 9px; padding: 4px 10px; font-size: 14px; font-weight: 700; color: var(--p); cursor: pointer; }
 
   /* 출력 양식 */
@@ -238,6 +242,11 @@
   .rec-body { margin-top: 15mm; min-height: 78mm; white-space: pre-wrap; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; padding: 9mm 8mm; font-size: 11.5pt; line-height: 2; }
   .don h2 { margin: 0 0 2mm; font-size: 10.5pt; }
   .don h2.gap { margin-top: 10mm; }
+  .sheet .valid { margin: 9mm 0 7mm; text-align: center; font-size: 9.5pt; color: #475569; }
+  .sheet.en h1.t { font-size: 21pt; letter-spacing: .03em; }
+  .sheet.en .statement { line-height: 1.9; }
+  .sheet.en .ftable dt { font-size: 10pt; }
+  .sheet.en .seal { font-size: 7pt; }
   .sheet-foot { margin-top: auto; border-top: 1px solid #cbd5e1; padding-top: 4mm; text-align: center; font-size: 9pt; line-height: 1.6; color: #64748b; }
   .sheet-foot strong { color: #334155; font-weight: 600; }
   @page { size: A4; margin: 0; }
@@ -344,7 +353,7 @@ var BOOT = {
 
   // ── 문서별 입력 항목 (원래 사이트와 동일) ─────────────
   var CATEGORY_DOCS = [
-    { category: 'member', ids: ['attendance', 'membership', 'donation'] },
+    { category: 'member', ids: ['attendance', 'membership', 'dedication', 'baptism', 'donation'] },
     { category: 'recommendation', ids: ['seniorPastor', 'minister', 'memberRecommendation'] },
     { category: 'employment', ids: ['employment', 'career', 'retirement'] }
   ];
@@ -356,6 +365,13 @@ var BOOT = {
       { key: 'submissionMethod', kind: 'text', required: false },
       { key: 'recommendationPurpose', kind: 'textarea', required: true, full: true },
       { key: 'referenceInfo', kind: 'textarea', required: false, full: true }
+    ];
+  }
+  function ceremonyDefs() {
+    return [
+      { key: 'ceremonyTime', kind: 'text', required: true },
+      { key: 'purpose', kind: 'text', required: true },
+      { key: 'submissionTo', kind: 'text', required: true }
     ];
   }
   function empDefs(hasEnd, dutiesRequired) {
@@ -373,7 +389,7 @@ var BOOT = {
   }
   var FIELDS = {
     attendance: [
-      { key: 'attendanceStart', kind: 'date', required: false },
+      { key: 'attendanceStart', kind: 'text', required: true },
       { key: 'attendancePeriod', kind: 'text', required: true },
       { key: 'purpose', kind: 'text', required: true },
       { key: 'submissionTo', kind: 'text', required: true }
@@ -384,6 +400,8 @@ var BOOT = {
       { key: 'purpose', kind: 'text', required: true },
       { key: 'submissionTo', kind: 'text', required: true }
     ],
+    dedication: ceremonyDefs(),
+    baptism: ceremonyDefs(),
     donation: [
       { key: 'donorName', kind: 'text', required: true },
       { key: 'residentNumber', kind: 'resident', required: true },
@@ -441,6 +459,12 @@ var BOOT = {
     }
     return textInput(def.key, text, { required: def.required, full: def.full, type: def.kind === 'date' ? 'date' : 'text' });
   }
+  // 만 19세 미만인지 (생년월일 8자리)
+  function isMinor(v) {
+    var y = +v.slice(0, 4), m = +v.slice(4, 6), d = +v.slice(6, 8), t = new Date();
+    var age = t.getFullYear() - y - ((t.getMonth() + 1 < m || (t.getMonth() + 1 === m && t.getDate() < d)) ? 1 : 0);
+    return age >= 0 && age < 19;
+  }
   function validBirth(v) {
     if (!/^\d{8}$/.test(v)) return false;
     var y = +v.slice(0, 4), m = +v.slice(4, 6), d = +v.slice(6, 8);
@@ -481,7 +505,7 @@ var BOOT = {
         '<div id="applyPane">' +
           (S.appearance.showSteps ? '<nav class="stepnav" id="stepnav" aria-label="신청 단계"></nav>' : '') +
           '<section class="panel" id="s1">' +
-            secHead('01', S.documentPrompt.title, S.documentPrompt.description) + docsHtml +
+            secHead('01', S.documentPrompt.title, S.documentPrompt.description) + docsHtml + docNoticesHtml() +
             '<p class="err hidden" id="err1" role="alert"></p>' +
             '<div class="btn-row end"><button type="button" class="btn" id="toStep2">' + esc(S.documentPrompt.button) + icon('chevron') + '</button></div>' +
           '</section>' +
@@ -513,6 +537,16 @@ var BOOT = {
     });
     renderStatusPane();
     goStep(1);
+  }
+
+  // 문서 목록 아래 안내 (기부금영수증, 기타 서류)
+  function docNoticesHtml() {
+    var items = [];
+    if (!S.documents.donation.enabled && S.documentPrompt.donationNotice) items.push(S.documentPrompt.donationNotice);
+    if (S.documentPrompt.otherNotice) items.push(S.documentPrompt.otherNotice);
+    if (!items.length) return '';
+    return '<div class="notice" style="margin:0">' + items.map(function (t) { return '<p style="margin:0">' + esc(t) + '</p>'; }).join('') +
+      '<p style="margin:6px 0 0">교회 사무실 <a class="tel-in" href="tel:' + esc(S.certificate.phone.replace(/\D/g, '')) + '">' + esc(S.certificate.phone) + '</a></p></div>';
   }
 
   function secHead(num, title, desc) {
@@ -558,17 +592,24 @@ var BOOT = {
         textInput('ministerName', c.minister, {}) +
         '<label class="field"><span>' + esc(c.relation.label) + req(true) + '</span><select class="ctl" name="applicantRelation" required>' +
           '<option value="">' + esc(c.selectPlaceholder) + '</option><option value="self">' + esc(c.relationSelf) + '</option>' +
-          '<option value="family">' + esc(c.relationFamily) + '</option><option value="staff">' + esc(c.relationStaff) + '</option>' +
-          '<option value="other">' + esc(c.relationOther) + '</option></select></label>' +
+          '<option value="guardian">' + esc(c.relationGuardian) + '</option></select></label>' +
+        (c.relationHelp ? '<p class="help full" style="margin:0">' + esc(c.relationHelp) + '</p>' : '') +
       '</div></div>' +
       '<div class="fsec" id="subjectSec"><h3>' + esc(c.subjectTitle) + '</h3><div class="grid2">' +
         textInput('subjectName', c.subjectName, { required: true }) +
         (isDonation ? '' : birthInput('subjectBirthDate', c.subjectBirthDate, true)) +
-        textInput('subjectRelation', c.subjectRelation, { required: true, full: true }) +
       '</div></div>' +
       '<div class="fsec"><h3>' + esc(doc.sectionTitle) + '</h3>' +
         (doc.notice ? '<div class="notice">' + esc(doc.notice) + '</div>' : '') +
         '<div class="grid2">' + FIELDS[id].map(function (def) { return dynamicField(def, doc.fields[def.key]); }).join('') + '</div></div>' +
+      (isDonation ? '' : '<div class="fsec"><h3>' + esc(S.language.title) + '</h3><div class="choices two">' +
+        [['ko', S.language.ko], ['en', S.language.en]].map(function (o) {
+          return '<label class="choice' + (o[0] === 'ko' ? ' on' : '') + '" data-lang="' + o[0] + '"><input type="radio" name="certificateLanguage" value="' + o[0] + '"' + (o[0] === 'ko' ? ' checked' : '') + ' required>' + esc(o[1]) + '</label>';
+        }).join('') + '</div>' +
+        '<div id="enSec" style="margin-top:20px"><div class="notice">' + esc(S.language.enNotice) + '</div><div class="grid2">' +
+          textInput('englishName', { label: S.language.englishNameLabel, placeholder: S.language.englishNamePlaceholder }, {
+            required: true, full: true, attrs: ' autocomplete="off" autocapitalize="characters" pattern="[A-Za-z][A-Za-z .,\'\\-]*" title="' + esc(S.language.englishNameError) + '"' }) +
+        '</div></div></div>') +
       '<div class="fsec"><h3>' + esc(S.attachment.title) + '</h3><p class="help">' + esc(S.attachment.description) + '</p>' +
         '<label class="drop"><input class="sr-only" type="file" id="fileInput" accept=".pdf,.doc,.docx,.hwp,.hwpx,.jpg,.jpeg,.png">' +
         '<span class="big">' + icon('file') + '</span><strong>' + esc(S.attachment.button) + '</strong><small>' + esc(S.attachment.help) + '</small></label>' +
@@ -581,11 +622,13 @@ var BOOT = {
           textInput('email', { label: S.delivery.emailLabel, placeholder: S.delivery.emailPlaceholder }, { required: true, type: 'email', attrs: ' autocomplete="email"' }) +
           textInput('emailConfirm', { label: S.delivery.emailConfirmLabel, placeholder: S.delivery.emailConfirmPlaceholder }, { required: true, type: 'email' }) +
         '</div></div>' +
-        '<div id="directSec" class="grid2" style="margin-top:20px">' +
+        '<div id="directSec" style="margin-top:20px">' + (S.delivery.directNotice ? '<div class="notice">' + esc(S.delivery.directNotice) + '</div>' : '') +
+          '<div class="grid2">' +
           textInput('recipientOrganization', { label: S.delivery.organizationLabel }, { required: true }) +
           textInput('recipientPerson', { label: S.delivery.contactLabel }, {}) +
-          textInput('recipientAddress', { label: S.delivery.addressLabel }, { required: true, full: true }) +
-        '</div>' +
+          textInput('recipientEmail', { label: S.delivery.recipientEmailLabel, placeholder: S.delivery.emailPlaceholder }, { required: true, full: true, type: 'email', attrs: ' autocomplete="off"' }) +
+        '</div></div>' +
+        (S.delivery.validityNotice ? '<div class="notice" style="margin:20px 0 0">' + esc(S.delivery.validityNotice) + '</div>' : '') +
         '<div class="grid2" style="margin-top:20px">' +
           textInput('requestedDate', { label: S.delivery.requestedDateLabel }, { type: 'date' }) +
           '<label class="field"><span>' + esc(S.delivery.copiesLabel) + req(true) + '</span><select class="ctl" name="copies" required>' +
@@ -603,13 +646,20 @@ var BOOT = {
     toggleSec('subjectSec', false);
     toggleSec('emailSec', false);
     toggleSec('directSec', false);
+    if (document.getElementById('enSec')) toggleSec('enSec', false);
 
     f.querySelector('[name=applicantRelation]').addEventListener('change', function (e) {
-      toggleSec('subjectSec', !!e.target.value && e.target.value !== 'self');
+      toggleSec('subjectSec', e.target.value === 'guardian');
+    });
+    f.querySelectorAll('[name=certificateLanguage]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        f.querySelectorAll('[data-lang]').forEach(function (el) { el.classList.toggle('on', el.getAttribute('data-lang') === r.value); });
+        toggleSec('enSec', r.value === 'en');
+      });
     });
     f.querySelectorAll('[name=deliveryMethod]').forEach(function (r) {
       r.addEventListener('change', function () {
-        f.querySelectorAll('.choice').forEach(function (el) { el.classList.toggle('on', el.getAttribute('data-del') === r.value); });
+        f.querySelectorAll('[data-del]').forEach(function (el) { el.classList.toggle('on', el.getAttribute('data-del') === r.value); });
         toggleSec('emailSec', r.value === 'email');
         toggleSec('directSec', r.value === 'direct');
       });
@@ -621,6 +671,13 @@ var BOOT = {
       };
       inp.addEventListener('input', check); inp.addEventListener('blur', check);
     });
+    var subjBirth = f.querySelector('[name=subjectBirthDate]');
+    if (subjBirth) {
+      var checkMinor = function () {
+        if (subjBirth.value && validBirth(subjBirth.value) && !isMinor(subjBirth.value)) subjBirth.setCustomValidity(c.subjectAdultError);
+      };
+      subjBirth.addEventListener('input', checkMinor); subjBirth.addEventListener('blur', checkMinor);
+    }
     f.querySelectorAll('[data-resident]').forEach(function (inp) {
       inp.addEventListener('input', function () {
         var d = inp.value.replace(/\D/g, '').slice(0, 13);
@@ -662,6 +719,10 @@ var BOOT = {
     f.querySelectorAll('[data-birth]').forEach(function (inp) {
       inp.setCustomValidity(!inp.value || validBirth(inp.value) ? '' : '생년월일 8자리를 확인해 주세요. (예: 19560312)');
     });
+    var sb = f.querySelector('[name=subjectBirthDate]');
+    if (sb && !sb.disabled && sb.value && validBirth(sb.value) && !isMinor(sb.value)) sb.setCustomValidity(S.common.subjectAdultError);
+    var en = f.querySelector('[name=englishName]');
+    if (en) en.value = en.value.replace(/\s+/g, ' ').trim();
     if (!f.checkValidity()) {
       showErr('err2', S.validation.requiredFields);
       f.reportValidity();
@@ -676,14 +737,24 @@ var BOOT = {
     var isDonation = P.docType === 'donation', doc = S.documents[P.docType], c = S.common;
     var deliveryLabels = { email: S.delivery.email, visit: S.delivery.visit, direct: S.delivery.direct };
     var g = function (k) { return String(data.get(k) || '').trim(); };
+    var guardian = g('applicantRelation') === 'guardian';
+    var lang = g('certificateLanguage') === 'en' ? 'en' : 'ko';
     var rows = [
       [c.applicantName.label, g('applicantName')],
       [c.phone.label, g('phone')],
       [c.department.label, g('affiliatedDepartment') || '-'],
+      [c.relation.label, guardian ? c.relationGuardian : c.relationSelf]
+    ];
+    if (guardian) rows.push([c.subjectName.label, g('subjectName')], [c.subjectBirthDate.label, koDate(g('subjectBirthDate'))]);
+    if (!isDonation) {
+      rows.push([S.language.title, lang === 'en' ? S.language.en : S.language.ko]);
+      if (lang === 'en') rows.push([S.language.englishNameLabel, g('englishName')]);
+    }
+    rows = rows.concat([
       [S.delivery.title, deliveryLabels[delivery] || '-'],
       [S.delivery.requestedDateLabel, g('requestedDate') ? koDate(g('requestedDate')) : S.delivery.requestedDateFallback],
       [S.delivery.copiesLabel, g('copies') || '-']
-    ];
+    ]);
     if (!isDonation) rows.splice(1, 0, [c.birthDate.label, koDate(g('birthDate'))]);
     if (isDonation) {
       var rn = g('residentNumber');
@@ -693,6 +764,7 @@ var BOOT = {
         [doc.fields.registeredAddress.label, g('registeredAddress') || '-']);
     }
     if (delivery === 'email') rows.push([S.delivery.emailLabel, g('email')]);
+    if (delivery === 'direct') rows.push([S.delivery.organizationLabel, g('recipientOrganization')], [S.delivery.recipientEmailLabel, g('recipientEmail')]);
     if (P.file) rows.push([S.attachment.title, P.file.name]);
 
     var values = { documentType: P.docType };
@@ -803,6 +875,12 @@ var BOOT = {
   // ═════════════════════════════════════════════
   var A = { token: '', list: [], statuses: [], sheetUrl: '', settings: null, filter: '전체', query: '', detail: null };
   var REC_TYPES = ['seniorPastor', 'minister', 'memberRecommendation'];
+  var CER_TYPES = ['dedication', 'baptism'];
+
+  function adminInput(key, label, value, type, hint) {
+    return '<label class="field"><span>' + esc(label) + '</span><input class="ctl" id="iss_' + key + '" type="' + type + '" value="' + esc(value || '') + '">' +
+      (hint ? '<small style="font-weight:400;color:var(--muted)">' + esc(hint) + '</small>' : '') + '</label>';
+  }
 
   function getToken() { try { return sessionStorage.getItem('cert_admin_token') || ''; } catch (e) { return ''; } }
   function setToken(t) { try { if (t) sessionStorage.setItem('cert_admin_token', t); else sessionStorage.removeItem('cert_admin_token'); } catch (e) {} }
@@ -929,12 +1007,14 @@ var BOOT = {
   function renderDetail() {
     var d = A.detail, p = d.payload, type = p.documentType;
     var isRec = REC_TYPES.indexOf(type) >= 0, isDon = type === 'donation';
-    var hidden = { documentType: 1, recommendationBody: 1, donationAmount: 1, donationPeriod: 1, donationType: 1 };
-    var relLabels = { self: S.common.relationSelf, family: S.common.relationFamily, staff: S.common.relationStaff, other: S.common.relationOther };
+    var hidden = { documentType: 1, recommendationBody: 1, donationAmount: 1, donationPeriod: 1, donationType: 1, confirmedStart: 1, confirmedDate: 1, officiant: 1, en: 1 };
+    var relLabels = { self: S.common.relationSelf, guardian: S.common.relationGuardian, family: '가족', staff: '교역자가 대신 신청', other: '기타' };
+    var isEn = p.certificateLanguage === 'en', isCer = CER_TYPES.indexOf(type) >= 0;
     var delLabels = { email: S.delivery.email, visit: S.delivery.visit, direct: S.delivery.direct };
     var shown = function (k, v) {
       if (k === 'applicantRelation') return relLabels[v] || v;
       if (k === 'deliveryMethod') return delLabels[v] || v;
+      if (k === 'certificateLanguage') return v === 'en' ? S.language.en : S.language.ko;
       if (/Date$|^deadline$|^employment(Start|End)$|^attendanceStart$/.test(k)) return koDate(v);
       return v;
     };
@@ -948,19 +1028,36 @@ var BOOT = {
       cells += '<div><span>' + esc(d.labels[k]) + '</span><b>' + esc(shown(k, p[k])) + '</b></div>';
     });
 
-    var issuance = '';
-    if (isRec) {
-      issuance = '<section class="box gold"><h2>발급 문서 작성</h2><p class="sub">신청자가 작성한 정보와 교회 기록을 확인한 뒤 최종 문서에 들어갈 내용을 입력해 주세요.</p>' +
-        '<label class="field" style="margin-top:14px"><span>추천서 본문</span><textarea class="ctl" id="recBody" rows="10" placeholder="추천 대상자의 신앙생활, 성품, 사역 및 추천 사유를 작성해 주세요.">' + esc(p.recommendationBody || '') + '</textarea></label>' +
-        '<div style="margin-top:14px"><button type="button" class="btn small" id="saveIss">발급 정보 저장</button></div><p class="ok-msg hidden" id="issMsg"></p></section>';
-    } else if (isDon) {
-      issuance = '<section class="box gold"><h2>발급 문서 작성</h2><p class="sub">헌금 기록을 확인한 뒤 영수증에 들어갈 내용을 입력해 주세요.</p>' +
-        '<div class="grid2" style="margin-top:14px">' +
-        '<label class="field"><span>기부 기간</span><input class="ctl" id="donPeriod" placeholder="예: 2026. 1. 1. ~ 2026. 12. 31." value="' + esc(p.donationPeriod || '') + '"></label>' +
-        '<label class="field"><span>확인된 기부금액 (숫자만)</span><input class="ctl" id="donAmount" inputmode="numeric" placeholder="예: 1200000" value="' + esc(p.donationAmount || '') + '"></label>' +
-        '<label class="field full"><span>기부금 유형</span><input class="ctl" id="donType" value="' + esc(p.donationType || '종교단체 기부금') + '"></label></div>' +
-        '<div style="margin-top:14px"><button type="button" class="btn small" id="saveIss">발급 정보 저장</button></div><p class="ok-msg hidden" id="issMsg"></p></section>';
+    // ── 발급 문서 작성 (관리자가 확인해 적는 내용) ──
+    var parts = [];
+    if (type === 'attendance') {
+      parts.push('<div class="grid2">' + adminInput('confirmedStart', '확인된 출석 시작일', p.confirmedStart, 'date',
+        '신청자가 적은 시점: ' + (p.attendanceStart || '-')) + '</div>');
     }
+    if (isCer) {
+      parts.push('<div class="grid2">' +
+        adminInput('confirmedDate', '확인된 ' + (type === 'baptism' ? '침례일' : '헌아일'), p.confirmedDate, 'date', '신청자가 적은 시기: ' + (p.ceremonyTime || '-')) +
+        adminInput('officiant', '집례자', p.officiant, 'text', '예: 스캇 브래너 목사') + '</div>');
+    }
+    if (isRec) {
+      parts.push('<label class="field"><span>추천서 본문' + (isEn ? ' (영어로 작성해 주세요)' : '') + '</span><textarea class="ctl" id="iss_recommendationBody" rows="10" placeholder="추천 대상자의 신앙생활, 성품, 사역 및 추천 사유를 작성해 주세요.">' + esc(p.recommendationBody || '') + '</textarea></label>');
+    }
+    if (isDon) {
+      parts.push('<div class="grid2">' +
+        '<label class="field"><span>기부 기간</span><input class="ctl" id="iss_donationPeriod" placeholder="예: 2026. 1. 1. ~ 2026. 12. 31." value="' + esc(p.donationPeriod || '') + '"></label>' +
+        '<label class="field"><span>확인된 기부금액 (숫자만)</span><input class="ctl" id="iss_donationAmount" inputmode="numeric" placeholder="예: 1200000" value="' + esc(p.donationAmount || '') + '"></label>' +
+        '<label class="field full"><span>기부금 유형</span><input class="ctl" id="iss_donationType" value="' + esc(p.donationType || '종교단체 기부금') + '"></label></div>');
+    }
+    if (isEn && !isDon) {
+      var need = enNeeds(type, p, A.settings);
+      parts.push('<div class="en-box"><h3>영문 발급 내용</h3><p class="sub">영문 증명서에 들어갈 내용을 영어로 옮겨 적어 주세요. 이름·날짜는 자동으로 영어로 바뀝니다.</p>' +
+        (need.length ? '<div class="grid2">' + need.map(function (n) {
+          return '<label class="field' + (n.full ? ' full' : '') + '"><span>' + esc(n.label) + '</span><input class="ctl" data-en="' + n.key + '" value="' + esc((p.en || {})[n.key] || '') + '" placeholder="' + esc(n.hint) + '"></label>';
+        }).join('') + '</div>' : '<p class="sub">옮겨 적을 항목이 없습니다.</p>') + '</div>');
+    }
+    var issuance = parts.length ? '<section class="box gold"><h2>발급 문서 작성</h2><p class="sub">신청자가 작성한 정보와 교회 기록을 확인한 뒤 최종 문서에 들어갈 내용을 입력해 주세요.</p>' +
+      '<div style="display:grid;gap:18px;margin-top:14px">' + parts.join('') + '</div>' +
+      '<div style="margin-top:14px"><button type="button" class="btn small" id="saveIss">발급 정보 저장</button></div><p class="ok-msg hidden" id="issMsg"></p></section>' : '';
 
     root.innerHTML = adminShell(
       '<button type="button" class="back" id="toList">' + icon('left') + ' 신청 목록</button>' +
@@ -1000,11 +1097,14 @@ var BOOT = {
 
     var iss = document.getElementById('saveIss');
     if (iss) iss.addEventListener('click', function () {
-      var body = isRec ? { recommendationBody: document.getElementById('recBody').value } : {
-        donationPeriod: document.getElementById('donPeriod').value,
-        donationAmount: document.getElementById('donAmount').value.replace(/[^0-9]/g, ''),
-        donationType: document.getElementById('donType').value
-      };
+      var body = {};
+      root.querySelectorAll('[id^="iss_"]').forEach(function (el) { body[el.id.slice(4)] = el.value.trim(); });
+      if (body.donationAmount !== undefined) body.donationAmount = body.donationAmount.replace(/[^0-9]/g, '');
+      var enInputs = root.querySelectorAll('[data-en]');
+      if (enInputs.length) {
+        body.en = {};
+        enInputs.forEach(function (el) { if (el.value.trim()) body.en[el.getAttribute('data-en')] = el.value.trim(); });
+      }
       iss.disabled = true; iss.textContent = '저장 중…';
       run('adminSaveIssuance', A.token, d.reference, body).then(function () {
         Object.keys(body).forEach(function (k) { p[k] = body[k]; });
@@ -1049,19 +1149,22 @@ var BOOT = {
 
   function drawPrint(resident) {
     var d = A.detail, p = d.payload, type = p.documentType, st = A.settings;
+    var en = p.certificateLanguage === 'en' && type !== 'donation';
     var tpl = st.outputs[type];
-    var missing = type === 'donation' && (!p.donationAmount || !st.certificate.organizationNumber);
+    var blocked = type === 'donation' && (!p.donationAmount || !st.certificate.organizationNumber);
+    var warns = printWarnings(type, p, st, en);
     var sheet;
     if (type === 'donation') sheet = donationSheet(p, st, d.documentNumber, resident);
-    else if (REC_TYPES.indexOf(type) >= 0) sheet = recommendationSheet(type, p, st, d.documentNumber);
-    else sheet = standardSheet(type, p, st, d.documentNumber);
+    else if (REC_TYPES.indexOf(type) >= 0) sheet = recommendationSheet(type, p, st, d.documentNumber, en);
+    else sheet = standardSheet(type, p, st, d.documentNumber, en);
 
     root.innerHTML = '<div class="print-wrap"><div class="print-bar no-print">' +
       '<button type="button" class="btn ghost small" id="printBack">' + icon('left') + ' 돌아가기</button>' +
-      '<div style="flex:1;min-width:200px"><b>' + esc(tpl.title) + ' 미리보기</b>' +
-      (missing ? '<small class="need">기부금액과 교회 고유번호(화면 문구 탭)를 입력해야 최종 발급할 수 있습니다.</small>'
-               : '<small>내용을 확인한 뒤 인쇄하거나 PDF로 저장해 주세요.</small>') + '</div>' +
-      (missing ? '' : '<button type="button" class="btn small" id="printBtn">' + icon('printer') + ' 인쇄·PDF 저장</button>') +
+      '<div style="flex:1;min-width:200px"><b>' + esc(tpl.title) + (en ? ' (영문)' : '') + ' 미리보기</b>' +
+      (blocked ? '<small class="need">기부금액과 교회 고유번호(화면 문구 탭)를 입력해야 최종 발급할 수 있습니다.</small>'
+       : warns.length ? '<small class="need">' + esc(warns.join(' · ')) + '</small>'
+       : '<small>내용을 확인한 뒤 인쇄하거나 PDF로 저장해 주세요.</small>') + '</div>' +
+      (blocked ? '' : '<button type="button" class="btn small" id="printBtn">' + icon('printer') + ' 인쇄·PDF 저장</button>') +
       '</div>' + sheet + '</div>';
     document.getElementById('printBack').addEventListener('click', function () { renderDetail(); scrollTop(); });
     var pb = document.getElementById('printBtn');
@@ -1069,14 +1172,85 @@ var BOOT = {
     scrollTop();
   }
 
-  function docSheet(st, number, title, compact, inner) {
-    return '<article class="sheet"><header class="sheet-head">' +
+  // 미리보기에서 알려 줄 빠진 내용
+  function printWarnings(type, p, st, en) {
+    var w = [];
+    if (type === 'attendance' && !p.confirmedStart) w.push('확인된 출석 시작일을 입력해 주세요');
+    if (CER_TYPES.indexOf(type) >= 0 && !p.confirmedDate) w.push('확인된 ' + (type === 'baptism' ? '침례일' : '헌아일') + '을 입력해 주세요');
+    if (REC_TYPES.indexOf(type) >= 0 && !p.recommendationBody) w.push('추천서 본문을 작성해 주세요');
+    if (en && enNeeds(type, p, st).some(function (n) { return !(p.en || {})[n.key]; })) w.push('영어로 옮겨 적지 않은 항목이 있습니다');
+    return w;
+  }
+
+  var EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  function enDate(v) {
+    var m = /^(\d{4})-?(\d{2})-?(\d{2})$/.exec(String(v || ''));
+    return m ? EN_MONTHS[+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1] : '';
+  }
+  function todayEn() { var d = new Date(); return EN_MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
+  function dt(v) { return v ? koDate(v) : '-'; }
+
+  // 출력 표의 항목: [키, 한글 값, 영문 자동 값 (null이면 관리자가 영어로 옮겨 적어야 함)]
+  function printRows(type, p, st) {
+    var birth = p.subjectBirthDate || p.birthDate;
+    var rows = [['name', p.subjectName || p.applicantName || '', p.englishName || ''], ['birthDate', dt(birth), enDate(birth)]];
+    var dept = p.affiliatedDepartment || '';
+    if (type === 'attendance') {
+      rows.push(['department', dept, null],
+        ['period', p.confirmedStart ? koDate(p.confirmedStart) + ' ~ 현재' : (p.attendancePeriod || ''),
+          p.confirmedStart ? enDate(p.confirmedStart) + ' ' + st.outputCommonEn.sinceSuffix : null],
+        ['submissionTo', p.submissionTo || '', null], ['purpose', p.purpose || '', null]);
+    } else if (type === 'membership') {
+      rows.push(['department', p.registeredDepartment || dept, null], ['registrationDate', dt(p.registrationDate), enDate(p.registrationDate)],
+        ['submissionTo', p.submissionTo || '', null], ['purpose', p.purpose || '', null]);
+    } else if (CER_TYPES.indexOf(type) >= 0) {
+      rows.push(['date', p.confirmedDate ? koDate(p.confirmedDate) : '', enDate(p.confirmedDate)], ['officiant', p.officiant || '', null],
+        ['submissionTo', p.submissionTo || '', null], ['purpose', p.purpose || '', null]);
+    } else if (REC_TYPES.indexOf(type) >= 0) {
+      rows.push(['department', dept, null], ['applicationArea', p.applicationArea || '', null]);
+    } else {
+      var ko = type === 'employment' ? dt(p.employmentStart) + ' ~ 현재' : dt(p.employmentStart) + ' ~ ' + dt(p.employmentEnd);
+      var e = type === 'employment' ? enDate(p.employmentStart) + ' ' + st.outputCommonEn.sinceSuffix : enDate(p.employmentStart) + ' – ' + enDate(p.employmentEnd);
+      rows.push(['department', p.department || dept, null], ['position', p.position || '', null], ['period', ko, e],
+        ['duties', p.duties || '', null], ['purpose', p.purpose || '', null]);
+    }
+    return rows;
+  }
+
+  // 영어로 옮겨 적어야 하는 항목 목록 (관리자 화면에 칸으로 나옵니다)
+  function enNeeds(type, p, st) {
+    var L = st.outputs[type].labels, out = [];
+    printRows(type, p, st).forEach(function (r) {
+      if (r[2] === null && r[1] && r[1] !== '-') out.push({ key: r[0], label: L[r[0]] || r[0], hint: r[1], full: r[0] === 'duties' });
+    });
+    if (REC_TYPES.indexOf(type) >= 0) {
+      if (p.submissionTo) out.push({ key: 'submissionTo', label: '수신 기관', hint: p.submissionTo });
+      if (type !== 'seniorPastor') {
+        var signer = type === 'minister' ? p.ministerName : p.recommendingMember;
+        if (signer) out.push({ key: 'signer', label: '서명자 이름', hint: signer });
+      }
+    }
+    return out;
+  }
+
+  function tableRows(type, p, st, en) {
+    var L = en ? st.outputsEn[type].labels : st.outputs[type].labels, E = p.en || {};
+    return printRows(type, p, st).map(function (r) {
+      var v = en ? (r[2] === null ? (E[r[0]] || (r[1] && r[1] !== '-' ? '' : '-')) : r[2]) : r[1];
+      return [L[r[0]], v || '-'];
+    });
+  }
+
+  function docSheet(st, number, title, compact, inner, en) {
+    var C = en ? st.outputCommonEn : st.outputCommon, cert = st.certificate;
+    return '<article class="sheet' + (en ? ' en' : '') + '"><header class="sheet-head">' +
       (st.appearance.showLogo ? '<img src="' + LOGO + '" alt="" style="width:' + esc(st.appearance.logoSize) + 'mm;height:' + esc(st.appearance.logoSize) + 'mm" onerror="this.style.visibility=\'hidden\'">' : '<span></span>') +
-      '<div class="c"><strong>' + esc(st.brand.churchName) + '</strong><p>' + esc(st.brand.churchEnglish) + '</p></div>' +
-      '<p class="r">' + esc(st.outputCommon.documentNumberLabel) + '<br><strong>' + esc(number) + '</strong></p></header>' +
+      '<div class="c"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong><p>' + esc(en ? st.brand.churchName : st.brand.churchEnglish) + '</p></div>' +
+      '<p class="r">' + esc(C.documentNumberLabel) + '<br><strong>' + esc(number) + '</strong></p></header>' +
       '<h1 class="t' + (compact ? ' compact' : '') + '">' + esc(title) + '</h1>' +
       '<div class="body' + (compact ? ' compact' : '') + '">' + inner + '</div>' +
-      '<footer class="sheet-foot"><strong>' + esc(st.brand.churchName) + '</strong> · ' + esc(st.certificate.address) + ' · ' + esc(st.certificate.phone) + '</footer></article>';
+      '<footer class="sheet-foot"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong> · ' +
+      esc(en ? cert.addressEn : cert.address) + ' · ' + esc(en ? cert.phoneEn : cert.phone) + '</footer></article>';
   }
   function fieldTable(rows, compact) {
     return '<dl class="ftable' + (compact ? ' compact' : '') + '">' + rows.map(function (r, i) {
@@ -1085,43 +1259,37 @@ var BOOT = {
     }).join('') + '</dl>';
   }
   function seal(label) { return '<span class="seal">' + esc(label) + '</span>'; }
-  function issuer(st) {
-    return '<div class="issuer"><p class="date"><span>' + esc(st.outputCommon.issueDateLabel) + '</span>' + todayKo() + '</p>' +
-      '<div class="signer"><span>담임목사</span><strong>' + esc(st.certificate.seniorPastor) + '</strong>' + seal(st.outputCommon.sealLabel) + '</div></div>';
+  function issuer(st, en) {
+    var C = en ? st.outputCommonEn : st.outputCommon;
+    return '<div class="issuer"><p class="date"><span>' + esc(C.issueDateLabel) + '</span>' + (en ? todayEn() : todayKo()) + '</p>' +
+      '<div class="signer"><span>' + (en ? 'Senior Pastor' : '담임목사') + '</span><strong>' + esc(en ? st.certificate.seniorPastorEn : st.certificate.seniorPastor) + '</strong>' + seal(C.sealLabel) + '</div></div>';
   }
-  function dt(v) { return v ? koDate(v) : '-'; }
-
-  function standardSheet(type, p, st, number) {
-    var tpl = st.outputs[type], L = tpl.labels;
-    var name = p.subjectName || p.applicantName || '-';
-    var birth = p.subjectBirthDate || p.birthDate;
-    var rows;
-    if (type === 'attendance') {
-      rows = [[L.name, name], [L.birthDate, dt(birth)], [L.department, p.affiliatedDepartment || '-'],
-        [L.period, p.attendancePeriod || dt(p.attendanceStart)], [L.submissionTo, p.submissionTo || '-'], [L.purpose, p.purpose || '-']];
-    } else if (type === 'membership') {
-      rows = [[L.name, name], [L.birthDate, dt(birth)], [L.department, p.registeredDepartment || p.affiliatedDepartment || '-'],
-        [L.registrationDate, dt(p.registrationDate)], [L.submissionTo, p.submissionTo || '-'], [L.purpose, p.purpose || '-']];
-    } else {
-      var period = type === 'employment' ? dt(p.employmentStart) + ' ~ 현재' : dt(p.employmentStart) + ' ~ ' + dt(p.employmentEnd);
-      rows = [[L.name, name], [L.birthDate, dt(birth)], [L.department, p.department || p.affiliatedDepartment || '-'],
-        [L.position, p.position || '-'], [L.period, period], [L.duties, p.duties || '-'], [L.purpose, p.purpose || '-']];
-    }
-    return docSheet(st, number, tpl.title, false, fieldTable(rows) + '<p class="statement">' + esc(tpl.statement) + '</p>' + issuer(st));
+  function validity(st, en) {
+    var t = (en ? st.outputCommonEn : st.outputCommon).validityNote;
+    return t ? '<p class="valid">' + esc(t) + '</p>' : '';
   }
 
-  function recommendationSheet(type, p, st, number) {
-    var tpl = st.outputs[type], L = tpl.labels;
-    var name = p.subjectName || p.applicantName || '-';
-    var signer = type === 'seniorPastor' ? st.certificate.seniorPastor : type === 'minister' ? (p.ministerName || '') : (p.recommendingMember || '');
+  function standardSheet(type, p, st, number, en) {
+    var tpl = en ? st.outputsEn[type] : st.outputs[type];
+    return docSheet(st, number, tpl.title, false,
+      fieldTable(tableRows(type, p, st, en)) + '<p class="statement">' + esc(tpl.statement) + '</p>' + issuer(st, en) + validity(st, en), en);
+  }
+
+  function recommendationSheet(type, p, st, number, en) {
+    var tpl = en ? st.outputsEn[type] : st.outputs[type], E = p.en || {};
+    var signerKo = type === 'seniorPastor' ? st.certificate.seniorPastor : type === 'minister' ? (p.ministerName || '') : (p.recommendingMember || '');
+    var signer = en ? (type === 'seniorPastor' ? st.certificate.seniorPastorEn : (E.signer || '')) : signerKo;
     var body = p.recommendationBody || tpl.statement;
+    var C = en ? st.outputCommonEn : st.outputCommon;
+    var to = en ? esc(tpl.recipientPrefix) + ' ' + esc(E.submissionTo || p.submissionTo || '')
+                : esc(p.submissionTo || '제출 기관') + ' ' + esc(tpl.recipientSuffix);
     return docSheet(st, number, tpl.title, true,
-      '<p class="rec-to">' + esc(p.submissionTo || '제출 기관') + ' ' + esc(tpl.recipientSuffix) + '</p>' +
-      fieldTable([[L.name, name], [L.birthDate, dt(p.subjectBirthDate || p.birthDate)], [L.department, p.affiliatedDepartment || '-'], [L.applicationArea, p.applicationArea || '-']]) +
+      '<p class="rec-to">' + to + '</p>' +
+      fieldTable(tableRows(type, p, st, en)) +
       '<div class="rec-body">' + esc(body) + '</div>' +
-      '<div class="issuer" style="margin-top:16mm"><p class="date">' + todayKo() + '</p>' +
+      '<div class="issuer" style="margin-top:16mm"><p class="date">' + (en ? todayEn() : todayKo()) + '</p>' +
       '<div class="signer"><span>' + esc(tpl.signerLabel) + '</span><strong>' + esc(signer) + '</strong>' +
-      seal(type === 'memberRecommendation' ? st.outputCommon.signatureSealLabel : st.outputCommon.sealLabel) + '</div></div>');
+      seal(type === 'memberRecommendation' ? C.signatureSealLabel : C.sealLabel) + '</div></div>', en);
   }
 
   function donationSheet(p, st, number, resident) {
@@ -1135,7 +1303,7 @@ var BOOT = {
       '<h2 class="gap">' + esc(Sx.organization) + '</h2>' +
       fieldTable([[L.organizationName, st.brand.churchName], [L.organizationNumber, st.certificate.organizationNumber || '관리자 입력 필요'],
         [L.organizationAddress, st.certificate.address], [L.representative, st.certificate.seniorPastor], [L.phone, st.certificate.phone]], true) +
-      '</section><p class="statement" style="margin-top:12mm;font-size:11.5pt">' + esc(tpl.statement) + '</p>' + issuer(st));
+      '</section><p class="statement" style="margin-top:12mm;font-size:11.5pt">' + esc(tpl.statement) + '</p>' + issuer(st, false));
   }
 
   // ── 시작 ─────────────────────────────────────
