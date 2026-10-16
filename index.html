@@ -310,6 +310,9 @@
   .draft-watermark { position: absolute; top: 43%; left: 0; width: 100%; text-align: center; transform: rotate(-30deg); z-index: 2; color: rgba(71,85,105,.28); font-family: "Malgun Gothic", sans-serif; font-size: 40pt; font-weight: 700; letter-spacing: .06em; white-space: nowrap; pointer-events: none; user-select: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .draft-notice { margin: 4mm 0 0; font-size: 8pt; line-height: 1.5; color: #475569; break-inside: avoid; page-break-inside: avoid; }
 
+  .sheet.letter { display: block; }
+  .sheet.letter .lbody { line-height: 1.55; }
+  .sheet.letter .lbody h4 { font-size: inherit; }
   @media print {
     body { background: #fff !important; }
     .no-print, .topbar, .toast { display: none !important; }
@@ -1542,6 +1545,44 @@ var BOOT = {
     });
   }
 
+  // Use the actual rendered content width so screen and A4 print share the same fit.
+  function fitLetterPages() {
+    root.querySelectorAll('.sheet.letter').forEach(function (sheet) {
+      var body = sheet.querySelector('.lbody'), head = sheet.querySelector('.sheet-head');
+      if (!body || !head || !body.getBoundingClientRect().width) return;
+      var target = 272 * body.getBoundingClientRect().width / 172;
+      var height = function () {
+        return sheet.lastElementChild.getBoundingClientRect().bottom - head.getBoundingClientRect().top;
+      };
+      var apply = function (size) { body.style.fontSize = size + 'pt'; };
+      var low = 9.5, high = 12;
+      apply(low);
+      if (height() > target) { sheet.setAttribute('data-fit-overflow', '1'); return; }
+      sheet.removeAttribute('data-fit-overflow');
+      for (var i = 0; i < 9; i++) {
+        var mid = (low + high) / 2;
+        apply(mid);
+        if (height() <= target) low = mid; else high = mid;
+      }
+      apply(Math.floor(low * 100) / 100);
+    });
+  }
+  function queueLetterFit() {
+    fitLetterPages();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
+      if (root.querySelector('.sheet.letter')) fitLetterPages();
+    });
+    root.querySelectorAll('.sheet.letter img').forEach(function (img) {
+      if (!img.complete) img.addEventListener('load', fitLetterPages, { once: true });
+    });
+  }
+  window.addEventListener('beforeprint', fitLetterPages);
+  function printLetterPages() {
+    var ready = document.fonts && document.fonts.ready;
+    var print = function () { fitLetterPages(); window.print(); };
+    if (ready) ready.then(print); else print();
+  }
+
   function renderDirectPrint() {
     var x = A.doc, d = x.doc, issued = x.status !== '작성 중', cancelled = x.status === '취소';
     PRINT_DATE = d.issuedAt || '';
@@ -1557,9 +1598,9 @@ var BOOT = {
         ((d.bilingual === '1' || d.enBody) ? englishLetterSheet(d, x.number) : '') + '</div>';
     document.getElementById('dBack').addEventListener('click', function () { PRINT_DATE = ''; if (issued) loadDirect(); else renderDirectEditor(); });
     var pb = document.getElementById('printBtn');
-    if (pb) pb.addEventListener('click', function () { window.print(); });
+    if (pb) pb.addEventListener('click', printLetterPages);
     var rp = document.getElementById('reviewPrintBtn');
-    if (rp) rp.addEventListener('click', function () { window.print(); });
+    if (rp) rp.addEventListener('click', printLetterPages);
     bindPdfUpload(x.number);
     var ib = document.getElementById('dIssue');
     if (ib) ib.addEventListener('click', function () {
@@ -1578,6 +1619,7 @@ var BOOT = {
         renderDirectPrint();
       }).catch(function (err) { ib.disabled = false; ib.removeAttribute('data-sure'); ib.innerHTML = icon('check') + ' 발급 확정'; handleAdminError(err); });
     });
+    queueLetterFit();
     scrollTop();
   }
 
