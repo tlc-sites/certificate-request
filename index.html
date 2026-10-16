@@ -1681,7 +1681,7 @@ var BOOT = {
         '<div class="lbody">' + letterBody(d.body || (en ? '[English version has not yet been entered.]' : ''), en ? '' : S.direct.closing) + '</div>' +
         '<div class="issuer lsign"><p class="date"><span>' + esc(en ? 'Date' : (oc ? oc.issueDateLabel : '발급일')) + '</span>' + (number ? (en ? todayEn() : todayKo()) : (en ? 'Assigned upon issuance' : '발급 확정일')) + '</p>' +
         '<div class="signer"><span>' + esc(is.name) + ' ' + esc(d.representativeTitle || (en ? '' : is.representativeTitle)) + '</span><strong>' + esc(d.representative || (en ? '' : is.representative)) + '</strong>' +
-        seal(en ? 'Official\nSeal' : (oc ? oc.sealLabel : '직인\n위치')) + '</div></div>' +
+        (number ? '' : seal(en ? 'Official\nSeal' : (oc ? oc.sealLabel : '직인\n위치'))) + '</div></div>' +
       '</div>' +
       (!number ? draftNotice(en) : '') +
       (foot.length ? '<footer class="sheet-foot"><strong>' + esc(is.name) + '</strong> · ' + foot.map(esc).join(' · ') + '</footer>' : '') + '</article>';
