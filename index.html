@@ -286,12 +286,32 @@
   .sheet-foot { margin-top: auto; border-top: 1px solid #cbd5e1; padding-top: 4mm; text-align: center; font-size: 9pt; line-height: 1.6; color: #64748b; }
   .sheet-foot strong { color: #334155; font-weight: 600; }
   @page { size: A4; margin: 0; }
+
+  /* Direct letters share the same 172 x 275 mm content area on screen and paper. */
+  .sheet.letter { padding: 12mm 19mm 10mm; }
+  .sheet.letter .sheet-head { grid-template-columns: 40mm 1fr 40mm; padding-bottom: 3mm; }
+  .sheet.letter .sheet-head .r { font-size: 8pt; line-height: 1.35; }
+  .sheet.letter h1.t.compact { margin-top: 6mm; font-size: 21pt; }
+  .sheet.letter[lang="en"] h1.t.compact { font-size: 20pt; letter-spacing: .08em; }
+  .sheet.letter .body.compact, .sheet.letter .body.no-title { margin-top: 5mm; }
+  .sheet.letter .ftable.compact { font-size: 9pt; line-height: 1.4; grid-template-columns: 30mm 1fr; }
+  .sheet.letter .ftable.compact dt, .sheet.letter .ftable.compact dd { padding: 1.5mm 3mm; }
+  .sheet.letter .lbody { margin-top: 4mm; font-size: 10pt; line-height: 1.5; }
+  .sheet.letter .lbody p { margin-bottom: 1.8mm; }
+  .sheet.letter .lbody h4 { margin: 2.2mm 0 .5mm; font-size: 10pt; }
+  .sheet.letter .lbody ul { margin-bottom: 1mm; }
+  .sheet.letter .lsign { margin-top: 4mm; }
+  .sheet.letter .lsign .date { margin: 0; font-size: 10pt; }
+  .sheet.letter .lsign .signer { margin-top: 2mm; min-height: 12mm; }
+  .sheet.letter .lsign .signer strong { font-size: 14pt; }
+
   @media print {
     body { background: #fff !important; }
     .no-print, .topbar, .toast { display: none !important; }
     .print-wrap { background: #fff; padding: 0; min-height: 0; }
     .sheet { box-shadow: none; width: 210mm; height: 297mm; min-height: 0; overflow: hidden; margin: 0; }
     .sheet.letter { width: auto; height: auto; min-height: 0; overflow: visible; padding: 0; }
+    .sheet.letter + .sheet.letter { break-before: page; page-break-before: always; }
     .sheet.letter .sheet-foot { margin-top: 5mm; padding-top: 3mm; }
   }
 </style>
@@ -1529,7 +1549,7 @@ var BOOT = {
       (issued ? '<button type="button" class="btn small" id="printBtn">' + icon('printer') + ' 인쇄·PDF 저장</button>' + (cancelled ? '' : pdfUploadButton())
               : '<button type="button" class="btn ghost small" id="reviewPrintBtn">' + icon('printer') + ' 한글·영문 검토용 인쇄·PDF</button><button type="button" class="btn small" id="dIssue">' + icon('check') + ' 발급 확정</button>') +
       '<p class="ok-msg hidden" id="printMsg" style="flex-basis:100%"></p></div>' + letterSheet(d, x.number) +
-        ((d.bilingual === '1' || d.enBody) ? '<div style="break-before:page;page-break-before:always"></div>' + englishLetterSheet(d, x.number) : '') + '</div>';
+        ((d.bilingual === '1' || d.enBody) ? englishLetterSheet(d, x.number) : '') + '</div>';
     document.getElementById('dBack').addEventListener('click', function () { PRINT_DATE = ''; if (issued) loadDirect(); else renderDirectEditor(); });
     var pb = document.getElementById('printBtn');
     if (pb) pb.addEventListener('click', function () { window.print(); });
