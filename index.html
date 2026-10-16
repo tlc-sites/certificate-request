@@ -247,6 +247,42 @@
   .sheet.en .statement { line-height: 1.9; }
   .sheet.en .ftable dt { font-size: 10pt; }
   .sheet.en .seal { font-size: 7pt; }
+  .pending { color: #94a3b8; font-weight: 400; }
+
+  /* 공문 (직접 발급) — 증명서 양식을 그대로 쓰고 본문만 덧붙입니다 */
+  .sheet.letter .body.compact { margin-top: 7mm; }
+  .sheet.letter .body.no-title { margin-top: 8mm; }
+  .sheet.letter h1.t.compact { margin-top: 9mm; font-size: 24pt; }
+  .sheet.letter .ftable.compact dt, .sheet.letter .ftable.compact dd { padding-top: 2mm; padding-bottom: 2mm; }
+  .sheet.letter .ftable { max-width: none; }
+  .sheet.letter .ftable dt { letter-spacing: .02em; }
+  .lbody { margin: 6mm 0 0; font-size: 10pt; line-height: 1.6; word-break: keep-all; color: #1e293b; }
+  .lbody p { margin: 0 0 2.4mm; }
+  .lbody h4 { margin: 3.4mm 0 .6mm; font-size: 10pt; break-after: avoid; page-break-after: avoid; }
+  .lbody h4 span { display: inline-block; min-width: 7mm; }
+  .lbody ul { margin: 0 0 1.4mm; padding-left: 7mm; }
+  .lbody li { margin: 0; padding-left: 1mm; }
+  .lsign { margin-top: 6mm; break-inside: avoid; page-break-inside: avoid; }
+  .lsign .signer { margin-top: 3mm; min-height: 14mm; }
+
+  /* 관리자: 기관 공간 (주님의교회 / LEVITES MINISTRIES) */
+  body.org-lm { --p: #1b1b1b; --a: #8c7b5f; --tint: #efefef; --soft: #f6f6f5; }
+  body.org-lm.admin-body { background: #f5f5f4; }
+  .brand-mark.lm { background: #fff; border: 1px solid #d6d6d6; }
+  .brand-mark.lm img { width: 30px; height: 30px; object-fit: contain; }
+  .org-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 0 12px; }
+  .org-switch button { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 58px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 16px; background: #fff; font-size: 16px; font-weight: 800; color: var(--muted); cursor: pointer; }
+  .org-switch button img { width: 30px; height: 30px; object-fit: contain; opacity: .55; }
+  .org-switch button.on { border-color: var(--p); color: var(--p); box-shadow: 0 0 0 1px var(--p); }
+  .org-switch button.on img { opacity: 1; }
+
+  /* 관리자 메뉴 */
+  .adm-nav { display: flex; gap: 4px; margin: 0 0 22px; padding: 5px; border: 1px solid var(--line); border-radius: 16px; background: #fff; overflow-x: auto; }
+  .adm-nav button { flex: 1; min-height: 46px; min-width: 96px; border: 0; border-radius: 12px; background: transparent; font-size: 16px; font-weight: 800; color: var(--muted); cursor: pointer; white-space: nowrap; }
+  .adm-nav button.on { background: var(--p); color: #fff; }
+  .docno { display: inline-block; margin-right: 4px; font-family: ui-monospace, Menlo, monospace; font-size: 15px; color: var(--p); letter-spacing: .02em; }
+  .item.void strong { text-decoration: line-through; color: var(--muted); }
+  .file-btn { cursor: pointer; }
   .sheet-foot { margin-top: auto; border-top: 1px solid #cbd5e1; padding-top: 4mm; text-align: center; font-size: 9pt; line-height: 1.6; color: #64748b; }
   .sheet-foot strong { color: #334155; font-weight: 600; }
   @page { size: A4; margin: 0; }
@@ -255,6 +291,8 @@
     .no-print, .topbar, .toast { display: none !important; }
     .print-wrap { background: #fff; padding: 0; min-height: 0; }
     .sheet { box-shadow: none; width: 210mm; height: 297mm; min-height: 0; overflow: hidden; margin: 0; }
+    .sheet.letter { width: auto; height: auto; min-height: 0; overflow: visible; padding: 0; }
+    .sheet.letter .sheet-foot { margin-top: 5mm; padding-top: 3mm; }
   }
 </style>
 </head>
@@ -276,6 +314,8 @@ var BOOT = {
 
   // 출력 문서 맨 위 교회 로고 (파일 하나로 쓰도록 그림을 코드 안에 넣었습니다)
   var LOGO = 'data:image/png;base64,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';
+  // LEVITES MINISTRIES 로고 (어린양 표시 — 증명서의 교회 로고 자리에 들어갑니다)
+  var LM_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAACEklEQVR42u2dQW4EIQwEBzTy/9/rU+4rRUkUwN2m+pZDNuByG/AsmfF4KT9+jsdc03z8CQAEAGeNZuUmcEA9pATAHsVitwBg844nAUBJagMgi38fB3Q9tN12DkgA1ActAYATrgcgA2E2C1K4QZhkdS0EuqHFEABACVqSleHqgi4OSLHPoQS5QHjFJheqLYMODkjFElA9jtHR1gsVHRyQiwIRHZ0wTSaQpzLyNIRhOPiqhTqcAOThYKQrhGEW+N8GI11ADNPg/zUIqQphNMv80+ONmwCo7oD+Na730VcI/e3liTaKssYJgt1BLDoHzLEVgQoAtP4yFQ4AAFIGkIQVB9jIoRkXOKDu9Nn+PKEIIG9aT5zb0S3KV3cA8nBuBiABBADFMDgHfJ9MCQCtHZk0ANoPOMDTBQDAAQBAAAAAMgfQvW2cOAAHIHUAfBsOB9wNoHs/KJUB0IwrBEDwWQMAgADgKdU7YnHLGtPxkh4vcDADdg0AWhWFAOIwhNjweeHuAGQCIARdIP1Ahtou7oAQd1N0B1Cplf8qMwGwp263cEBcEHzpbWgaLtAStzHnoQmezDKru8q3vsJExplTKPtlD0tsQ/cnR1YlU5eH8nal50YHSO7I6Ib+7B67O2IhFkDp+bh3Q3e/6Hn73N7DWVK1YMueyJXWgLgt+CsdUBUk+4dBb9Ost6j/z3PuNVZuW9BjifEFcTdgXx0WeXMAAAAASUVORK5CYII=';
 
   var S = null;            // 화면 문구 (시트의 "화면 문구" 탭)
   var root = document.getElementById('root');
@@ -340,7 +380,10 @@ var BOOT = {
     if (!v || isNaN(d.getTime())) return v || '-';
     return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
   }
-  function todayKo() { var d = new Date(); return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
+  // 출력 문서의 날짜: 발급 확정일 (확정 전에는 오늘)
+  var PRINT_DATE = '';
+  function printDay() { var d = PRINT_DATE ? new Date(PRINT_DATE) : new Date(); return isNaN(d.getTime()) ? new Date() : d; }
+  function todayKo() { var d = printDay(); return d.getFullYear() + '년 ' + (d.getMonth() + 1) + '월 ' + d.getDate() + '일'; }
   function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
   function applyColors() {
     document.documentElement.style.setProperty('--p', S.appearance.primaryColor);
@@ -873,7 +916,8 @@ var BOOT = {
   // ═════════════════════════════════════════════
   // 관리자 화면
   // ═════════════════════════════════════════════
-  var A = { token: '', list: [], statuses: [], sheetUrl: '', settings: null, filter: '전체', query: '', detail: null };
+  var A = { token: '', list: [], statuses: [], sheetUrl: '', settings: null, filter: '전체', query: '', detail: null, view: 'apps',
+    ledger: [], ledgerIssuer: '전체', ledgerCat: '전체', ledgerQuery: '', direct: [], doc: null };
   var REC_TYPES = ['seniorPastor', 'minister', 'memberRecommendation'];
   var CER_TYPES = ['dedication', 'baptism'];
 
@@ -885,13 +929,52 @@ var BOOT = {
   function getToken() { try { return sessionStorage.getItem('cert_admin_token') || ''; } catch (e) { return ''; } }
   function setToken(t) { try { if (t) sessionStorage.setItem('cert_admin_token', t); else sessionStorage.removeItem('cert_admin_token'); } catch (e) {} }
 
+  // 주님의교회 / LEVITES MINISTRIES 는 따로 보이는 공간입니다 (도구와 발급대장 시트는 함께 씁니다)
+  function getOrg() { try { return sessionStorage.getItem('cert_admin_org') === 'lm' ? 'lm' : 'tlc'; } catch (e) { return 'tlc'; } }
+  function setOrg(o) { A.org = o; try { sessionStorage.setItem('cert_admin_org', o); } catch (e) {} document.body.classList.toggle('org-lm', o === 'lm'); }
+  function adminBrand() {
+    if (A.org === 'lm') {
+      var lm = S.issuers.lm;
+      return '<a class="brand" href="' + esc(BOOT.baseUrl) + '?admin=1"><span class="brand-mark lm"><img src="' + LM_LOGO + '" alt=""></span>' +
+        '<span><strong>' + esc(lm.name) + '</strong><small>문서 발급 관리</small></span></a>';
+    }
+    return brandHtml('증명서 신청 관리', BOOT.baseUrl + '?admin=1');
+  }
   function adminShell(inner) {
-    return '<header class="topbar no-print"><div class="topbar-in">' + brandHtml('증명서 신청 관리', BOOT.baseUrl + '?admin=1') +
-      '<div class="top-actions"><a class="icon-btn" href="' + esc(BOOT.baseUrl) + '">' + icon('external') + '<span>신청 화면</span></a>' +
+    return '<header class="topbar no-print"><div class="topbar-in">' + adminBrand() +
+      '<div class="top-actions">' + (A.org === 'lm' ? '' : '<a class="icon-btn" href="' + esc(BOOT.baseUrl) + '">' + icon('external') + '<span>신청 화면</span></a>') +
       (A.token ? '<button type="button" class="icon-btn" id="logoutBtn" aria-label="로그아웃">' + icon('logout') + '</button>' : '') +
-      '</div></div></header><main class="adm">' + inner + '</main>';
+      '</div></div></header><main class="adm">' + (A.token ? orgSwitch() + adminNav() : '') + inner + '</main>';
+  }
+  function orgSwitch() {
+    return '<div class="org-switch no-print" role="tablist" aria-label="기관 선택">' + [['tlc', LOGO, S.issuers.tlc.name], ['lm', LM_LOGO, S.issuers.lm.name]].map(function (o) {
+      return '<button type="button" role="tab" class="' + (A.org === o[0] ? 'on' : '') + '" data-org="' + o[0] + '" aria-selected="' + (A.org === o[0]) + '">' +
+        '<img src="' + o[1] + '" alt="">' + esc(o[2]) + '</button>';
+    }).join('') + '</div>';
+  }
+  function adminNav() {
+    var items = A.org === 'lm' ? [['ledger', '발급대장'], ['direct', '직접 발급']] : [['apps', '신청 관리'], ['ledger', '발급대장'], ['direct', '직접 발급']];
+    return '<nav class="adm-nav no-print" aria-label="관리 메뉴">' + items.map(function (v) {
+      return '<button type="button" class="' + (A.view === v[0] ? 'on' : '') + '" data-view="' + v[0] + '">' + v[1] + '</button>';
+    }).join('') + '</nav>';
+  }
+  function goView(v) {
+    if (A.org === 'lm' && v === 'apps') v = 'ledger';
+    A.view = v; scrollTop();
+    if (v === 'ledger') loadLedger(); else if (v === 'direct') loadDirect(); else loadList();
   }
   function bindLogout() {
+    root.querySelectorAll('.adm-nav [data-view]').forEach(function (b) {
+      b.addEventListener('click', function () { goView(b.getAttribute('data-view')); });
+    });
+    root.querySelectorAll('.org-switch [data-org]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var o = b.getAttribute('data-org');
+        if (o === A.org) return;
+        setOrg(o);
+        goView(o === 'lm' && A.view === 'apps' ? 'ledger' : A.view);
+      });
+    });
     var b = document.getElementById('logoutBtn');
     if (b) b.addEventListener('click', function () {
       run('adminLogout', A.token).catch(function () {});
@@ -913,7 +996,11 @@ var BOOT = {
     document.body.classList.add('admin-body');
     document.title = '증명서 신청 관리 | ' + S.brand.churchName;
     A.token = getToken();
-    if (A.token) loadList(); else renderLogin();
+    setOrg(getOrg());
+    if (!A.token) { renderLogin(); return; }
+    // 신청 목록에서 화면 설정을 받아 오므로 먼저 불러온 뒤 리바이츠 공간이면 발급대장으로 갑니다
+    if (A.org === 'lm') { run('adminList', A.token).then(function (res) { A.settings = res.settings; A.statuses = res.statuses; goView('ledger'); }).catch(function (err) { handleAdminError(err); }); }
+    else loadList();
   }
 
   function renderLogin(msg) {
@@ -931,7 +1018,8 @@ var BOOT = {
       btn.disabled = true;
       run('adminLogin', form.pw.value).then(function (res) {
         A.token = res.token; setToken(res.token);
-        loadList();
+        if (A.org === 'lm') { run('adminList', A.token).then(function (r2) { A.settings = r2.settings; A.statuses = r2.statuses; goView('ledger'); }).catch(handleAdminError); }
+        else loadList();
       }).catch(function (err) {
         btn.disabled = false;
         showErr('errLogin', err.message);
@@ -940,6 +1028,8 @@ var BOOT = {
   }
 
   function loadList() {
+    if (A.org === 'lm') setOrg('tlc');
+    A.view = 'apps';
     root.innerHTML = adminShell('<div class="loading">' + icon('loader', 'spin') + '&nbsp;신청 목록을 불러오는 중입니다…</div>');
     run('adminList', A.token).then(function (res) {
       A.list = res.applications; A.statuses = res.statuses; A.sheetUrl = res.sheetUrl; A.settings = res.settings;
@@ -1063,7 +1153,7 @@ var BOOT = {
       '<button type="button" class="back" id="toList">' + icon('left') + ' 신청 목록</button>' +
       '<section class="panel" style="margin-top:10px">' +
         '<div class="detail-head"><div><p class="kicker">접수 ' + esc(d.reference) + '</p><h1>' + esc(d.documentName) + '</h1>' +
-        '<p class="help" style="margin:6px 0 0">' + esc(d.dateLabel) + ' 접수</p></div>' +
+        '<p class="help" style="margin:6px 0 0">' + esc(d.dateLabel) + ' 접수' + (d.documentNumber ? ' · 문서번호 ' + esc(d.documentNumber) : '') + '</p></div>' +
         '<button type="button" class="btn small" id="toPrint">' + icon('printer') + ' 출력 양식 미리보기</button></div>' +
         '<section class="box blue"><h2>처리 상태</h2><p class="sub">저장하면 성도의 신청 내역 조회 화면에 바로 반영됩니다.</p>' +
           '<div class="row-ctl"><select class="ctl" id="stSel">' + A.statuses.map(function (s) {
@@ -1085,10 +1175,13 @@ var BOOT = {
       save.disabled = true; save.textContent = '저장 중…';
       run('adminUpdateStatus', A.token, d.reference, sel.value).then(function (res) {
         d.status = sel.value;
+        if (res.documentNumber) { d.documentNumber = res.documentNumber; d.issuedAt = res.issuedAt; }
         A.list.forEach(function (a) { if (a.reference === d.reference) a.status = sel.value; });
         if (res.residentDeleted) { d.residentMasked = '삭제됨'; renderDetail(); toast('처리 상태를 저장했고, 주민등록번호를 삭제했습니다.'); return; }
         save.textContent = '상태 저장';
-        var m = document.getElementById('stMsg'); m.textContent = '처리 상태를 저장했습니다.'; m.classList.remove('hidden');
+        var m = document.getElementById('stMsg');
+        m.textContent = res.documentNumber ? '발급 완료로 저장했습니다. 문서번호 ' + res.documentNumber + '가 발급대장에 기록되었습니다.' : '처리 상태를 저장했습니다.';
+        m.classList.remove('hidden');
       }).catch(function (err) {
         save.disabled = false; save.textContent = '상태 저장';
         handleAdminError(err);
@@ -1134,6 +1227,366 @@ var BOOT = {
     });
   }
 
+  // ═════════════════════════════════════════════
+  // 발급대장 (주님의교회 · LEVITES MINISTRIES 공식 문서)
+  // ═════════════════════════════════════════════
+  function loadLedger() {
+    A.view = 'ledger';
+    root.innerHTML = adminShell('<div class="loading">' + icon('loader', 'spin') + '&nbsp;발급대장을 불러오는 중입니다…</div>');
+    run('adminLedger', A.token).then(function (res) {
+      A.ledger = res.rows; A.ledgerCats = res.categories; A.sheetUrl = res.sheetUrl || A.sheetUrl;
+      renderLedger();
+    }).catch(function (err) { if (!handleAdminError(err)) { A.ledger = []; renderLedger(); } });
+  }
+
+  function issuerName(key) { return (S.issuers[key] || {}).name || key; }
+
+  function renderLedger() {
+    var cats = ['전체'].concat(A.ledgerCats || ['증명서', '추천서', '승인서', '공문', '기타']);
+    root.innerHTML = adminShell(
+      '<div class="detail-head"><div><p class="kicker">' + esc(issuerName(A.org)) + '</p><h1>발급대장</h1>' +
+      '<p class="help" style="margin:6px 0 0">' + esc(issuerName(A.org)) + ' 이름으로 발급한 문서가 문서번호(' + (A.org === 'lm' ? 'LM' : 'TLC') + '-연도-번호) 순서대로 기록됩니다.</p></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost small" id="reload">' + icon('refresh') + ' 새로고침</button>' +
+      (A.sheetUrl ? '<a class="btn ghost small" href="' + esc(A.sheetUrl) + '" target="_blank" rel="noopener">' + icon('sheet') + ' 시트 열기</a>' : '') + '</div></div>' +
+      '<div class="filters">' + cats.map(function (c) {
+        return '<button type="button" class="chip' + (A.ledgerCat === c ? ' on' : '') + '" data-lc="' + esc(c) + '">' + esc(c === '전체' ? '모든 구분' : c) + '</button>';
+      }).join('') + '</div>' +
+      '<input class="ctl search" id="lq" placeholder="문서번호, 문서명, 수신·대상으로 찾기" value="' + esc(A.ledgerQuery) + '">' +
+      '<div class="list" id="llist"></div>');
+    bindLogout();
+    document.getElementById('reload').addEventListener('click', loadLedger);
+    root.querySelectorAll('[data-lc]').forEach(function (b) { b.addEventListener('click', function () { A.ledgerCat = b.getAttribute('data-lc'); renderLedger(); }); });
+    var q = document.getElementById('lq');
+    q.addEventListener('input', function () { A.ledgerQuery = q.value; drawLedgerItems(); });
+    drawLedgerItems();
+  }
+
+  function drawLedgerItems() {
+    var q = A.ledgerQuery.trim().toLowerCase();
+    var rows = A.ledger.filter(function (r) {
+      if (r.issuerKey !== A.org) return false;
+      if (A.ledgerCat !== '전체' && r.category !== A.ledgerCat) return false;
+      return !q || (r.number + ' ' + r.title + ' ' + r.recipient + ' ' + r.source).toLowerCase().indexOf(q) >= 0;
+    });
+    var box = document.getElementById('llist');
+    if (!rows.length) {
+      var any = A.ledger.some(function (r) { return r.issuerKey === A.org; });
+      box.innerHTML = '<div class="empty">' + (any ? '조건에 맞는 문서가 없습니다.' : '아직 ' + esc(issuerName(A.org)) + ' 이름으로 발급된 문서가 없습니다.') + '</div>';
+      return;
+    }
+    box.innerHTML = rows.map(function (r) {
+      var cancelled = r.status === '취소';
+      return '<button type="button" class="item' + (cancelled ? ' void' : '') + '" data-no="' + esc(r.number) + '"><span>' +
+        '<strong><span class="docno">' + esc(r.number) + '</span> ' + esc(r.title) + '</strong>' +
+        '<small>' + esc(r.date) + ' · ' + esc(r.category) + ' · ' + esc(r.recipient || '-') + '</small></span>' +
+        '<span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end">' +
+        (r.hasFile ? '<span class="st s1">PDF</span>' : '') +
+        '<span class="st ' + (cancelled ? 's3' : 's5') + '">' + esc(r.status) + '</span></span></button>';
+    }).join('');
+    box.querySelectorAll('[data-no]').forEach(function (b) {
+      b.addEventListener('click', function () { renderLedgerDetail(b.getAttribute('data-no')); });
+    });
+  }
+
+  function renderLedgerDetail(number) {
+    var r = A.ledger.filter(function (x) { return x.number === number; })[0];
+    if (!r) { renderLedger(); return; }
+    var cancelled = r.status === '취소';
+    var cells = [['문서번호', r.number], ['발급일', r.date], ['발급 주체', r.issuer], ['구분', r.category], ['문서명', r.title],
+      ['수신·발급 대상', r.recipient], ['대표자', r.rep], ['상태', r.status], [r.sourceType === 'direct' ? '문서 ID' : '접수번호', r.source],
+      ['발급 언어', r.lang], ['유효기한', r.validUntil], ['비고', r.note]]
+      .filter(function (c) { return c[1]; })
+      .map(function (c) { return '<div><span>' + esc(c[0]) + '</span><b>' + esc(c[1]) + '</b></div>'; }).join('');
+    root.innerHTML = adminShell(
+      '<button type="button" class="back" id="toLedger">' + icon('left') + ' 발급대장</button>' +
+      '<section class="panel" style="margin-top:10px">' +
+        '<div class="detail-head"><div><p class="kicker">' + esc(r.issuer) + ' · ' + esc(r.category) + '</p><h1>' + esc(r.title) + '</h1>' +
+        '<p class="help" style="margin:6px 0 0">' + esc(r.number) + ' · ' + esc(r.date) + ' 발급</p></div>' +
+        (r.source ? '<button type="button" class="btn small" id="openSrc">' + icon('printer') + ' 문서 보기·인쇄</button>' : '') + '</div>' +
+        '<section class="box blue"><h2>발급본 PDF</h2><p class="sub">인쇄 화면에서 PDF로 저장한 파일을 올리면 드라이브 문서 폴더에 정리되고 이곳에서 다시 받을 수 있습니다.</p>' +
+          '<div class="row-ctl" style="flex-wrap:wrap">' + (r.hasFile ? '<button type="button" class="btn ghost small" id="getPdf">' + icon('download') + ' PDF 받기</button>' : '') +
+          pdfUploadButton(r.hasFile) + '</div><p class="ok-msg hidden" id="printMsg"></p></section>' +
+        '<div class="fields"><div class="kv">' + cells + '</div></div>' +
+        (cancelled ? '' :
+          '<section class="box" style="border:1px solid #f3c7d0;background:#fff7f8"><h2>발급 취소</h2>' +
+          '<p class="sub">잘못 발급한 문서는 지우지 않고 취소로 남깁니다. 문서번호는 다시 쓰지 않습니다.</p>' +
+          '<div class="row-ctl"><input class="ctl" id="cancelReason" placeholder="취소 사유 (예: 수신처 오기재로 재발급)">' +
+          '<button type="button" class="btn small" id="cancelBtn" style="background:var(--rose)">취소로 표시</button></div>' +
+          '<p class="err hidden" id="cancelErr"></p></section>') +
+      '</section>');
+    bindLogout();
+    document.getElementById('toLedger').addEventListener('click', function () { renderLedger(); scrollTop(); });
+    var os = document.getElementById('openSrc');
+    if (os) os.addEventListener('click', function () {
+      if (r.sourceType === 'direct') openDirect(r.source, true); else { setOrg('tlc'); A.view = 'apps'; openDetail(r.source); }
+    });
+    bindPdfUpload(r.number, function () { r.hasFile = true; renderLedgerDetail(number); });
+    var gp = document.getElementById('getPdf');
+    if (gp) gp.addEventListener('click', function () {
+      gp.disabled = true;
+      run('adminLedgerFile', A.token, r.number).then(function (res) {
+        var a = document.createElement('a'); a.href = res.dataUrl; a.download = res.name;
+        document.body.appendChild(a); a.click(); a.remove();
+      }).catch(handleAdminError).then(function () { gp.disabled = false; });
+    });
+    var cb = document.getElementById('cancelBtn');
+    if (cb) cb.addEventListener('click', function () {
+      var reason = document.getElementById('cancelReason').value.trim();
+      if (!reason) { showErr('cancelErr', '취소 사유를 적어 주세요.'); return; }
+      if (cb.getAttribute('data-sure') !== '1') {
+        cb.setAttribute('data-sure', '1'); cb.textContent = '한 번 더 누르면 취소됩니다';
+        return;
+      }
+      cb.disabled = true; cb.textContent = '처리 중…';
+      run('adminLedgerCancel', A.token, r.number, reason).then(function () {
+        r.status = '취소';
+        r.note = (r.note ? r.note + '\n' : '') + '[취소 ' + new Date().toISOString().slice(0, 10) + '] ' + reason;
+        toast(r.number + ' 문서를 취소로 표시했습니다.');
+        renderLedgerDetail(number);
+      }).catch(function (err) { cb.disabled = false; cb.textContent = '취소로 표시'; cb.removeAttribute('data-sure'); handleAdminError(err); });
+    });
+  }
+
+  // ── 발급본 PDF 올리기 (인쇄 화면 · 발급대장 공용) ─────
+  function pdfUploadButton(replace) {
+    return '<label class="btn ghost small file-btn">' + icon('file') + ' ' + (replace ? 'PDF 바꾸기' : '발급본 PDF 올리기') +
+      '<input type="file" accept="application/pdf,.pdf" class="sr-only" id="pdfInput"></label>';
+  }
+  function bindPdfUpload(number, done) {
+    var inp = document.getElementById('pdfInput');
+    if (!inp || !number) return;
+    inp.addEventListener('change', function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      var msg = document.getElementById('printMsg');
+      var say = function (t, bad) { if (!msg) { toast(t); return; } msg.textContent = t; msg.style.color = bad ? 'var(--rose)' : ''; msg.classList.remove('hidden'); };
+      if (!/\.pdf$/i.test(f.name)) { say('PDF 파일만 올릴 수 있습니다.', true); inp.value = ''; return; }
+      if (f.size > 15 * 1024 * 1024) { say('15MB 이하의 PDF 파일을 올려 주세요.', true); inp.value = ''; return; }
+      say('PDF를 올리는 중입니다…');
+      readFile(f).then(function (att) {
+        att.data = String(att.data).replace(/^data:[^;]*;/, 'data:application/pdf;');
+        return run('adminLedgerUpload', A.token, number, att);
+      }).then(function () {
+        say('발급본 PDF를 드라이브에 저장하고 발급대장에 연결했습니다.');
+        A.ledger.forEach(function (x) { if (x.number === number) x.hasFile = true; });
+        if (done) done();
+      }).catch(function (err) { if (!handleAdminError(err)) say(err.message, true); }).then(function () { inp.value = ''; });
+    });
+  }
+
+  // ═════════════════════════════════════════════
+  // 직접 발급 (온라인 신청 없이 관리자가 바로 작성하는 공문·승인서)
+  // ═════════════════════════════════════════════
+  function loadDirect() {
+    A.view = 'direct';
+    root.innerHTML = adminShell('<div class="loading">' + icon('loader', 'spin') + '&nbsp;문서 목록을 불러오는 중입니다…</div>');
+    run('adminDirectList', A.token).then(function (res) {
+      A.direct = res.documents; A.directCats = res.categories;
+      renderDirectList();
+    }).catch(function (err) { if (!handleAdminError(err)) { A.direct = []; renderDirectList(); } });
+  }
+
+  function renderDirectList() {
+    root.innerHTML = adminShell(
+      '<div class="detail-head"><div><p class="kicker">' + esc(issuerName(A.org)) + '</p><h1>직접 발급</h1>' +
+      '<p class="help" style="margin:6px 0 0">' + esc(issuerName(A.org)) + ' 이름으로 바로 발급하는 공문·승인서를 작성합니다. 발급 확정하면 문서번호가 붙고 발급대장에 기록됩니다.</p></div>' +
+      '<button type="button" class="btn small" id="newDoc">' + icon('file') + ' 새 문서 작성</button></div>' +
+      '<div class="list" id="dlist"></div>');
+    bindLogout();
+    document.getElementById('newDoc').addEventListener('click', function () { openDirect(null); });
+    var box = document.getElementById('dlist');
+    var mine = A.direct.filter(function (d) { return (d.issuerKey || 'tlc') === A.org; });
+    if (!mine.length) { box.innerHTML = '<div class="empty">아직 작성한 문서가 없습니다.</div>'; return; }
+    box.innerHTML = mine.map(function (d) {
+      var st = d.status === '작성 중' ? 's2' : d.status === '취소' ? 's3' : 's5';
+      return '<button type="button" class="item" data-id="' + esc(d.id) + '"><span><strong>' + (d.number ? '<span class="docno">' + esc(d.number) + '</span> ' : '') + esc(d.title || '(제목 없음)') + '</strong>' +
+        '<small>' + esc(d.category) + ' · ' + esc(d.recipient || '수신 미입력') + ' · ' + esc(d.updatedAt) + '</small></span>' +
+        '<span class="st ' + st + '">' + esc(d.status) + '</span></button>';
+    }).join('');
+    box.querySelectorAll('[data-id]').forEach(function (b) { b.addEventListener('click', function () { openDirect(b.getAttribute('data-id')); }); });
+  }
+
+  function blankDirect() {
+    var is = S.issuers[A.org];
+    return { issuer: A.org, category: A.org === 'lm' ? '승인서' : '공문', heading: A.org === 'lm' ? '승인서' : '', docTitle: '', recipient: '', reference: '', subject: '', body: '',
+      representativeTitle: is.representativeTitle, representative: is.representative, note: '' };
+  }
+
+  function openDirect(id, toPrint) {
+    if (!id) { A.doc = { id: '', status: '작성 중', number: '', doc: blankDirect() }; renderDirectEditor(); return; }
+    root.innerHTML = adminShell('<div class="loading">' + icon('loader', 'spin') + '&nbsp;문서를 불러오는 중입니다…</div>');
+    run('adminDirectGet', A.token, id).then(function (res) {
+      A.doc = res;
+      if (res.doc && res.doc.issuer && res.doc.issuer !== A.org) setOrg(res.doc.issuer);
+      if (toPrint || res.status !== '작성 중') renderDirectPrint(); else renderDirectEditor();
+    }).catch(function (err) { if (!handleAdminError(err)) loadDirect(); });
+  }
+
+  function renderDirectEditor() {
+    var x = A.doc, d = x.doc, cats = A.directCats || ['증명서', '추천서', '승인서', '공문', '기타'];
+    var f = function (key, label, ph, opt) {
+      opt = opt || {};
+      return '<label class="field' + (opt.full ? ' full' : '') + '"><span>' + esc(label) + (opt.req ? ' <b class="req">*</b>' : '') + '</span>' +
+        (opt.area ? '<textarea class="ctl" data-k="' + key + '" rows="' + opt.area + '" placeholder="' + esc(ph || '') + '">' + esc(d[key] || '') + '</textarea>'
+                  : '<input class="ctl" data-k="' + key + '" value="' + esc(d[key] || '') + '" placeholder="' + esc(ph || '') + '">') +
+        (opt.help ? '<small style="font-weight:400;color:var(--muted)">' + esc(opt.help) + '</small>' : '') + '</label>';
+    };
+    root.innerHTML = adminShell(
+      '<button type="button" class="back" id="toDirect">' + icon('left') + ' 직접 발급 목록</button>' +
+      '<section class="panel" style="margin-top:10px">' +
+        '<div class="detail-head"><div><p class="kicker">' + (x.id ? '문서 ID ' + esc(x.id) : '새 문서') + '</p><h1>공문 작성</h1>' +
+        '<p class="help" style="margin:6px 0 0">문서번호와 시행일자는 발급 확정할 때 붙습니다.</p></div></div>' +
+        '<div class="selected-doc"><span>발급 기관</span><strong>' + esc(issuerName(d.issuer)) + '</strong></div>' +
+        '<div class="fsec" style="border-top:0;padding-top:4px"><div class="grid2">' +
+          '<label class="field"><span>구분 <b class="req">*</b></span><select class="ctl" data-k="category">' + cats.map(function (c) {
+            return '<option' + (c === d.category ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>' +
+          f('heading', '큰 제목 (문서 맨 위)', '예: 승인서', { help: '비워 두면 큰 제목 없이 표부터 시작합니다.' }) +
+          f('docTitle', '문서명 (발급대장에 기록)', '예: 곡 사용 및 라이브 실황 음원 발매 승인서', { req: true, full: true }) +
+          f('recipient', '수신', '예: 기프티드(GIFTED) 귀중', { req: true }) +
+          f('reference', '참조', '예: 공연 및 음원 제작 담당자') +
+          f('subject', '제목', '공문 제목', { req: true, full: true }) +
+          f('body', '본문', '', { req: true, full: true, area: 18,
+            help: '“가. 나.”로 시작하는 줄은 소제목, “- ”로 시작하는 줄은 목록으로 정리됩니다. **글자**처럼 감싸면 굵게 표시됩니다. 마지막에 “끝.”은 자동으로 붙습니다.' }) +
+          f('representativeTitle', '대표자 직함', '예: 대표') +
+          f('representative', '대표자 이름', '예: 스캇 브래너 (Scott Brenner)') +
+          f('note', '비고 (발급대장에만 기록, 인쇄되지 않음)', '예: 월드비전과 함께하는 찬양 집회 · 2026.10.31', { full: true }) +
+        '</div></div>' +
+        '<p class="err hidden" id="dErr" role="alert"></p>' +
+        '<div class="btn-row" style="flex-wrap:wrap">' +
+          (x.id ? '<button type="button" class="btn ghost" id="dDel" style="color:var(--rose)">임시 문서 삭제</button>' : '<span></span>') +
+          '<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn ghost" id="dSave">임시 저장</button>' +
+          '<button type="button" class="btn" id="dPreview">' + icon('printer') + ' 미리보기</button></div></div>' +
+        '<p class="ok-msg hidden" id="dMsg"></p>' +
+      '</section>');
+    bindLogout();
+    document.getElementById('toDirect').addEventListener('click', loadDirect);
+    var catSel = root.querySelector('[data-k=category]'), headIn = root.querySelector('[data-k=heading]');
+    catSel.addEventListener('change', function () {
+      // 큰 제목이 비었거나 이전 구분 이름 그대로면 새 구분 이름으로 바꿉니다 (공문·기타는 비웁니다)
+      if (!headIn.value.trim() || headIn.value.trim() === d.category) headIn.value = /^(공문|기타)$/.test(catSel.value) ? '' : catSel.value;
+      d.category = catSel.value;
+    });
+    document.getElementById('dSave').addEventListener('click', function () {
+      saveDirect().then(function () { renderDirectEditor(); showOk('dMsg', '임시 저장했습니다. (' + A.doc.id + ')'); }, function () {});
+    });
+    document.getElementById('dPreview').addEventListener('click', function () {
+      readDirectForm();
+      var miss = [['docTitle', '문서명'], ['recipient', '수신'], ['subject', '제목'], ['body', '본문']].filter(function (m) { return !d[m[0]].trim(); });
+      if (miss.length) { showErr('dErr', miss.map(function (m) { return m[1]; }).join(', ') + '을(를) 입력해 주세요.'); return; }
+      saveDirect().then(renderDirectPrint, function () {});
+    });
+    var del = document.getElementById('dDel');
+    if (del) del.addEventListener('click', function () {
+      if (del.getAttribute('data-sure') !== '1') { del.setAttribute('data-sure', '1'); del.textContent = '한 번 더 누르면 삭제됩니다'; return; }
+      del.disabled = true;
+      run('adminDirectDelete', A.token, x.id).then(function () { toast('임시 문서를 삭제했습니다.'); loadDirect(); }).catch(function (err) { del.disabled = false; handleAdminError(err); });
+    });
+  }
+
+  function showOk(id, t) { var m = document.getElementById(id); if (m) { m.textContent = t; m.classList.remove('hidden'); } }
+
+  function readDirectForm() {
+    var d = A.doc.doc;
+    root.querySelectorAll('[data-k]').forEach(function (el) { d[el.getAttribute('data-k')] = el.value; });
+  }
+
+  function saveDirect() {
+    readDirectForm();
+    var btns = root.querySelectorAll('#dSave, #dPreview');
+    btns.forEach(function (b) { b.disabled = true; });
+    var e = document.getElementById('dErr'); if (e) e.classList.add('hidden');
+    return run('adminDirectSave', A.token, A.doc.id || null, A.doc.doc).then(function (res) {
+      A.doc.id = res.id;
+      btns.forEach(function (b) { b.disabled = false; });
+    }, function (err) {
+      btns.forEach(function (b) { b.disabled = false; });
+      if (!handleAdminError(err)) showErr('dErr', err.message);
+      throw err;
+    });
+  }
+
+  function renderDirectPrint() {
+    var x = A.doc, d = x.doc, issued = x.status !== '작성 중', cancelled = x.status === '취소';
+    PRINT_DATE = d.issuedAt || '';
+    root.innerHTML = '<div class="print-wrap letter-wrap"><style>@page { size: A4; margin: 12mm 19mm 10mm; }</style><div class="print-bar no-print">' +
+      '<button type="button" class="btn ghost small" id="dBack">' + icon('left') + ' ' + (issued ? '목록' : '고치기') + '</button>' +
+      '<div style="flex:1;min-width:200px"><b>' + esc(d.docTitle || d.subject) + (x.number ? ' · ' + esc(x.number) : ' 미리보기') + '</b>' +
+      (cancelled ? '<small class="need">취소된 문서입니다.</small>'
+        : issued ? '<small>인쇄하거나 PDF로 저장한 뒤, 직인을 찍은 발급본 PDF를 올려 두세요.</small>'
+        : '<small>발급 확정을 누르면 ' + esc(issuerName(d.issuer)) + ' 문서번호가 붙고 발급대장에 기록됩니다. 확정한 뒤에는 고칠 수 없습니다.</small>') + '</div>' +
+      (issued ? '<button type="button" class="btn small" id="printBtn">' + icon('printer') + ' 인쇄·PDF 저장</button>' + (cancelled ? '' : pdfUploadButton())
+              : '<button type="button" class="btn small" id="dIssue">' + icon('check') + ' 발급 확정</button>') +
+      '<p class="ok-msg hidden" id="printMsg" style="flex-basis:100%"></p></div>' + letterSheet(d, x.number) + '</div>';
+    document.getElementById('dBack').addEventListener('click', function () { PRINT_DATE = ''; if (issued) loadDirect(); else renderDirectEditor(); });
+    var pb = document.getElementById('printBtn');
+    if (pb) pb.addEventListener('click', function () { window.print(); });
+    bindPdfUpload(x.number);
+    var ib = document.getElementById('dIssue');
+    if (ib) ib.addEventListener('click', function () {
+      if (ib.getAttribute('data-sure') !== '1') {
+        ib.setAttribute('data-sure', '1'); ib.innerHTML = icon('check') + ' 한 번 더 누르면 확정됩니다';
+        return;
+      }
+      ib.disabled = true; ib.innerHTML = icon('loader', 'spin') + ' 확정 중…';
+      run('adminDirectIssue', A.token, x.id, d).then(function (res) {
+        x.status = '발급 완료'; x.number = res.number; d.number = res.number; d.issuedAt = res.issuedAt;
+        d.representativeTitle = d.representativeTitle || S.issuers[d.issuer].representativeTitle;
+        d.representative = d.representative || S.issuers[d.issuer].representative;
+        toast('문서번호 ' + res.number + '로 발급을 확정했습니다.');
+        renderDirectPrint();
+      }).catch(function (err) { ib.disabled = false; ib.removeAttribute('data-sure'); ib.innerHTML = icon('check') + ' 발급 확정'; handleAdminError(err); });
+    });
+    scrollTop();
+  }
+
+  // 본문 꾸밈: "가." 소제목, "- " 목록, **굵게**
+  function letterBody(text, closing) {
+    var inline = function (t) { return esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>'); };
+    var lines = String(text || '').replace(/\r\n?/g, '\n').split('\n');
+    var html = [], list = null, para = [];
+    var flushPara = function () { if (para.length) { html.push('<p>' + para.map(inline).join('<br>') + '</p>'); para = []; } };
+    var flushList = function () { if (list) { html.push('<ul>' + list.map(function (li) { return '<li>' + inline(li) + '</li>'; }).join('') + '</ul>'); list = null; } };
+    lines.forEach(function (ln) {
+      var t = ln.trim();
+      if (!t) { flushPara(); flushList(); return; }
+      var h = /^([가-하]\.|[0-9]+\.)\s*(.+)$/.exec(t);
+      var b = /^[-•·]\s+(.+)$/.exec(t);
+      if (b) { flushPara(); (list = list || []).push(b[1]); return; }
+      flushList();
+      if (h && t.length <= 60) { flushPara(); html.push('<h4><span>' + esc(h[1]) + '</span>' + inline(h[2]) + '</h4>'); return; }
+      para.push(t);
+    });
+    flushPara(); flushList();
+    if (closing) {
+      var last = html.length - 1;
+      if (last >= 0 && /<\/p>$/.test(html[last])) html[last] = html[last].replace(/<\/p>$/, '&nbsp;&nbsp;' + esc(closing) + '</p>');
+      else html.push('<p>' + esc(closing) + '</p>');
+    }
+    return html.join('');
+  }
+
+  // 공문도 증명서와 같은 틀(머리글 · 큰 제목 · 표 · 서명 · 바닥글)을 씁니다
+  function letterSheet(d, number) {
+    var key = d.issuer === 'lm' ? 'lm' : 'tlc', is = S.issuers[key] || S.issuers.tlc, oc = A.settings ? A.settings.outputCommon : null;
+    var ap = S.appearance, size = esc(ap.logoSize || '18');
+    var logo = ap.showLogo ? '<img src="' + (key === 'lm' ? LM_LOGO : LOGO) + '" alt="" style="width:' + size + 'mm;height:' + size + 'mm">' : '<span></span>';
+    var rows = [['시행일자', number ? dotDate(printDay()) : '발급 확정일'], ['수신', d.recipient], ['참조', d.reference], ['제목', d.subject]]
+      .filter(function (r) { return r[1]; });
+    var foot = [is.address, is.phone, is.email].filter(Boolean);
+    return '<article class="sheet letter"><header class="sheet-head">' + logo +
+      '<div class="c"><strong>' + esc(is.name) + '</strong><p>' + esc(is.subName || '') + '</p></div>' +
+      '<p class="r">' + esc(oc ? oc.documentNumberLabel : '문서번호') + '<br><strong>' + (number ? esc(number) : '<span class="pending">발급 확정 시 부여</span>') + '</strong></p></header>' +
+      (d.heading ? '<h1 class="t compact">' + esc(d.heading) + '</h1>' : '') +
+      '<div class="body compact' + (d.heading ? '' : ' no-title') + '">' + fieldTable(rows, true) +
+        '<div class="lbody">' + letterBody(d.body, S.direct.closing) + '</div>' +
+        '<div class="issuer lsign"><p class="date"><span>' + esc(oc ? oc.issueDateLabel : '발급일') + '</span>' + (number ? todayKo() : '발급 확정일') + '</p>' +
+        '<div class="signer"><span>' + esc(is.name) + ' ' + esc(d.representativeTitle || is.representativeTitle) + '</span><strong>' + esc(d.representative || is.representative) + '</strong>' +
+        seal(oc ? oc.sealLabel : '직인\n위치') + '</div></div>' +
+      '</div>' +
+      (foot.length ? '<footer class="sheet-foot"><strong>' + esc(is.name) + '</strong> · ' + foot.map(esc).join(' · ') + '</footer>' : '') + '</article>';
+  }
+  function dotDate(d) { return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + '.'; }
+
   // ── 출력 양식 (A4 인쇄·PDF 저장) ─────────────
   function renderPrint() {
     var d = A.detail, p = d.payload, type = p.documentType, st = A.settings;
@@ -1149,6 +1602,7 @@ var BOOT = {
 
   function drawPrint(resident) {
     var d = A.detail, p = d.payload, type = p.documentType, st = A.settings;
+    PRINT_DATE = d.issuedAt || '';
     var en = p.certificateLanguage === 'en' && type !== 'donation';
     var tpl = st.outputs[type];
     var blocked = type === 'donation' && (!p.donationAmount || !st.certificate.organizationNumber);
@@ -1158,17 +1612,34 @@ var BOOT = {
     else if (REC_TYPES.indexOf(type) >= 0) sheet = recommendationSheet(type, p, st, d.documentNumber, en);
     else sheet = standardSheet(type, p, st, d.documentNumber, en);
 
+    var issued = !!d.documentNumber;
     root.innerHTML = '<div class="print-wrap"><div class="print-bar no-print">' +
       '<button type="button" class="btn ghost small" id="printBack">' + icon('left') + ' 돌아가기</button>' +
-      '<div style="flex:1;min-width:200px"><b>' + esc(tpl.title) + (en ? ' (영문)' : '') + ' 미리보기</b>' +
+      '<div style="flex:1;min-width:200px"><b>' + esc(tpl.title) + (en ? ' (영문)' : '') + (issued ? ' · ' + esc(d.documentNumber) : ' 미리보기') + '</b>' +
       (blocked ? '<small class="need">기부금액과 교회 고유번호(화면 문구 탭)를 입력해야 최종 발급할 수 있습니다.</small>'
        : warns.length ? '<small class="need">' + esc(warns.join(' · ')) + '</small>'
-       : '<small>내용을 확인한 뒤 인쇄하거나 PDF로 저장해 주세요.</small>') + '</div>' +
-      (blocked ? '' : '<button type="button" class="btn small" id="printBtn">' + icon('printer') + ' 인쇄·PDF 저장</button>') +
+       : issued ? '<small>인쇄하거나 PDF로 저장한 뒤, 저장한 PDF를 올려 두면 발급대장에서 언제든 다시 받을 수 있습니다.</small>'
+       : '<small>내용을 확인한 뒤 발급 확정을 누르면 문서번호가 붙고 발급대장에 기록됩니다.</small>') + '</div>' +
+      (blocked ? '' : issued
+        ? '<button type="button" class="btn small" id="printBtn">' + icon('printer') + ' 인쇄·PDF 저장</button>' + pdfUploadButton()
+        : '<button type="button" class="btn small" id="issueBtn">' + icon('check') + ' 발급 확정</button>') +
+      '<p class="ok-msg hidden" id="printMsg" style="flex-basis:100%"></p>' +
       '</div>' + sheet + '</div>';
-    document.getElementById('printBack').addEventListener('click', function () { renderDetail(); scrollTop(); });
+    document.getElementById('printBack').addEventListener('click', function () { PRINT_DATE = ''; renderDetail(); scrollTop(); });
     var pb = document.getElementById('printBtn');
     if (pb) pb.addEventListener('click', function () { window.print(); });
+    bindPdfUpload(d.documentNumber);
+    var ib = document.getElementById('issueBtn');
+    if (ib) ib.addEventListener('click', function () {
+      ib.disabled = true; ib.innerHTML = icon('loader', 'spin') + ' 확정 중…';
+      run('adminUpdateStatus', A.token, d.reference, '발급 완료').then(function (res) {
+        d.status = '발급 완료'; d.documentNumber = res.documentNumber; d.issuedAt = res.issuedAt;
+        if (res.residentDeleted) d.residentMasked = '삭제됨';
+        A.list.forEach(function (a) { if (a.reference === d.reference) a.status = d.status; });
+        toast('문서번호 ' + res.documentNumber + '로 발급을 확정했습니다.');
+        renderPrint();
+      }).catch(function (err) { ib.disabled = false; ib.innerHTML = icon('check') + ' 발급 확정'; handleAdminError(err); });
+    });
     scrollTop();
   }
 
@@ -1187,7 +1658,7 @@ var BOOT = {
     var m = /^(\d{4})-?(\d{2})-?(\d{2})$/.exec(String(v || ''));
     return m ? EN_MONTHS[+m[2] - 1] + ' ' + (+m[3]) + ', ' + m[1] : '';
   }
-  function todayEn() { var d = new Date(); return EN_MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
+  function todayEn() { var d = printDay(); return EN_MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
   function dt(v) { return v ? koDate(v) : '-'; }
 
   // 출력 표의 항목: [키, 한글 값, 영문 자동 값 (null이면 관리자가 영어로 옮겨 적어야 함)]
@@ -1246,7 +1717,7 @@ var BOOT = {
     return '<article class="sheet' + (en ? ' en' : '') + '"><header class="sheet-head">' +
       (st.appearance.showLogo ? '<img src="' + LOGO + '" alt="" style="width:' + esc(st.appearance.logoSize) + 'mm;height:' + esc(st.appearance.logoSize) + 'mm" onerror="this.style.visibility=\'hidden\'">' : '<span></span>') +
       '<div class="c"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong><p>' + esc(en ? st.brand.churchName : st.brand.churchEnglish) + '</p></div>' +
-      '<p class="r">' + esc(C.documentNumberLabel) + '<br><strong>' + esc(number) + '</strong></p></header>' +
+      '<p class="r">' + esc(C.documentNumberLabel) + '<br><strong>' + (number ? esc(number) : '<span class="pending">' + (en ? 'Assigned on issue' : '발급 확정 시 부여') + '</span>') + '</strong></p></header>' +
       '<h1 class="t' + (compact ? ' compact' : '') + '">' + esc(title) + '</h1>' +
       '<div class="body' + (compact ? ' compact' : '') + '">' + inner + '</div>' +
       '<footer class="sheet-foot"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong> · ' +
