@@ -305,6 +305,10 @@
   .sheet.letter .lsign .signer { margin-top: 2mm; min-height: 12mm; }
   .sheet.letter .lsign .signer strong { font-size: 14pt; }
 
+
+  .draft-watermark { position: absolute; top: 43%; left: 0; width: 100%; text-align: center; transform: rotate(-30deg); color: rgba(71,85,105,.13); font-family: "Malgun Gothic", sans-serif; font-size: 40pt; font-weight: 700; letter-spacing: .06em; white-space: nowrap; pointer-events: none; user-select: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .draft-notice { margin: 4mm 0 0; font-size: 8pt; line-height: 1.5; color: #475569; break-inside: avoid; page-break-inside: avoid; }
+
   @media print {
     body { background: #fff !important; }
     .no-print, .topbar, .toast { display: none !important; }
@@ -1603,6 +1607,14 @@ var BOOT = {
   }
 
   // 공문도 증명서와 같은 틀(머리글 · 큰 제목 · 표 · 서명 · 바닥글)을 씁니다
+  function draftWatermark(en) {
+    return '<div class="draft-watermark" aria-hidden="true">' + (en ? 'DRAFT FOR REVIEW' : '발급 전 확인용') + '</div>';
+  }
+  function draftNotice(en) {
+    return '<p class="draft-notice">' + (en
+      ? 'This document is for pre-issuance review only and has no official validity.<br>Please verify the final version bearing a document number, date of issue, and official seal.'
+      : '※ 본 문서는 발급 전 확인용 문서로, 정식 발급 효력이 없습니다.<br>문서번호와 발급일자가 부여되고 직인이 포함된 최종본을 확인해 주시기 바랍니다.') + '</p>';
+  }
   function englishLetterSheet(d, number) {
     var e = {};
     Object.keys(d).forEach(function (k) { e[k] = d[k]; });
@@ -1618,7 +1630,7 @@ var BOOT = {
     var rows = [[en ? 'Date of Issue' : '시행일자', number ? (en ? todayEn() : dotDate(printDay())) : (en ? 'Assigned upon issuance' : '발급 확정일')], [en ? 'To' : '수신', d.recipient], [en ? 'Attention' : '참조', d.reference], [en ? 'Subject' : '제목', d.subject]]
       .filter(function (r) { return r[1]; });
     var foot = [is.address, is.phone, is.email].filter(Boolean);
-    return '<article class="sheet letter"' + (en ? ' lang="en"' : ' lang="ko"') + '><header class="sheet-head">' + logo +
+    return '<article class="sheet letter"' + (en ? ' lang="en"' : ' lang="ko"') + '>' + (number ? '' : draftWatermark(en)) + '<header class="sheet-head">' + logo +
       '<div class="c"><strong>' + esc(is.name) + '</strong><p>' + esc(en ? '' : (is.subName || '')) + '</p></div>' +
       '<p class="r">' + esc(en ? 'Document No.' : (oc ? oc.documentNumberLabel : '문서번호')) + '<br><strong>' + (number ? esc(number) : '<span class="pending">' + (en ? 'Assigned upon issuance' : '발급 확정 시 부여') + '</span>') + '</strong></p></header>' +
       (d.heading ? '<h1 class="t compact">' + esc(d.heading) + '</h1>' : '') +
@@ -1628,7 +1640,7 @@ var BOOT = {
         '<div class="signer"><span>' + esc(is.name) + ' ' + esc(d.representativeTitle || (en ? '' : is.representativeTitle)) + '</span><strong>' + esc(d.representative || (en ? '' : is.representative)) + '</strong>' +
         seal(en ? 'Official\nSeal' : (oc ? oc.sealLabel : '직인\n위치')) + '</div></div>' +
       '</div>' +
-      (!number ? '<p class="help" style="font-size:10px;margin-top:12px">' + (en ? 'DRAFT FOR REVIEW — Not officially issued.' : '검토용 초안 — 정식 발급된 문서가 아닙니다.') + '</p>' : '') +
+      (!number ? draftNotice(en) : '') +
       (foot.length ? '<footer class="sheet-foot"><strong>' + esc(is.name) + '</strong> · ' + foot.map(esc).join(' · ') + '</footer>' : '') + '</article>';
   }
   function dotDate(d) { return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + '.'; }
@@ -1760,13 +1772,13 @@ var BOOT = {
 
   function docSheet(st, number, title, compact, inner, en) {
     var C = en ? st.outputCommonEn : st.outputCommon, cert = st.certificate;
-    return '<article class="sheet' + (en ? ' en' : '') + '"><header class="sheet-head">' +
+    return '<article class="sheet' + (en ? ' en' : '') + '">' + (number ? '' : draftWatermark(en)) + '<header class="sheet-head">' +
       (st.appearance.showLogo ? '<img src="' + LOGO + '" alt="" style="width:' + esc(st.appearance.logoSize) + 'mm;height:' + esc(st.appearance.logoSize) + 'mm" onerror="this.style.visibility=\'hidden\'">' : '<span></span>') +
       '<div class="c"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong><p>' + esc(en ? st.brand.churchName : st.brand.churchEnglish) + '</p></div>' +
       '<p class="r">' + esc(C.documentNumberLabel) + '<br><strong>' + (number ? esc(number) : '<span class="pending">' + (en ? 'Assigned on issue' : '발급 확정 시 부여') + '</span>') + '</strong></p></header>' +
       '<h1 class="t' + (compact ? ' compact' : '') + '">' + esc(title) + '</h1>' +
       '<div class="body' + (compact ? ' compact' : '') + '">' + inner + '</div>' +
-      '<footer class="sheet-foot"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong> · ' +
+      (number ? '' : draftNotice(en)) + '<footer class="sheet-foot"><strong>' + esc(en ? cert.churchNameEn : st.brand.churchName) + '</strong> · ' +
       esc(en ? cert.addressEn : cert.address) + ' · ' + esc(en ? cert.phoneEn : cert.phone) + '</footer></article>';
   }
   function fieldTable(rows, compact) {
