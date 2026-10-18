@@ -262,6 +262,7 @@
   .lbody h4 span { display: inline-block; min-width: 7mm; }
   .lbody ul { margin: 0 0 1.4mm; padding-left: 7mm; }
   .lbody li { margin: 0; padding-left: 1mm; }
+  .preset-signer { font-size: 11pt; line-height: 1.5; }
   .lsign { margin-top: 6mm; break-inside: avoid; page-break-inside: avoid; }
   .lsign .signer { margin-top: 3mm; min-height: 14mm; }
 
@@ -1434,10 +1435,46 @@ var BOOT = {
     box.querySelectorAll('[data-id]').forEach(function (b) { b.addEventListener('click', function () { openDirect(b.getAttribute('data-id')); }); });
   }
 
+  // Resolved footer text is saved with the document, so issued copies never follow later settings edits.
+  function issuerPresets(key) {
+    return key === 'lm' ? [['institution', '기관 명의'], ['representative', '대표자 명의'], ['englishInstitution', '영문 기관 명의'], ['englishRepresentative', '영문 대표자 명의'], ['signature', '서명형'], ['custom', '사용자 지정']]
+      : [['institution', '교회 명의'], ['pastor', '담임목사 명의'], ['department', '담당부서 명의'], ['custom', '사용자 지정']];
+  }
+  function resolveIssuerFooter(d, settings) {
+    var key = d.issuer, p = d.issuerPreset, is = settings.issuers[key];
+    if (!p || p === 'legacy') return;
+    if (!issuerPresets(key).some(function (v) { return v[0] === p; })) throw new Error('발급 명의를 선택해 주세요.');
+    var lines = [], mode = 'seal';
+    if (key === 'lm') {
+      if (p === 'institution') lines = ['LEVITES MINISTRIES', '리바이츠 미니스트리즈'];
+      if (p === 'representative') lines = ['LEVITES MINISTRIES', '리바이츠 미니스트리즈', '대표 스캇 브래너 (Scott Brenner)'];
+      if (p === 'englishInstitution') lines = ['LEVITES MINISTRIES'];
+      if (p === 'englishRepresentative') lines = ['LEVITES MINISTRIES', 'Scott Brenner, Representative'];
+      if (p === 'signature') { lines = ['LEVITES MINISTRIES', 'Scott Brenner', 'Representative']; mode = 'signature'; }
+    } else {
+      lines = [is.name];
+      if (p === 'pastor') lines.push([d.representativeTitle || is.representativeTitle, d.representative || is.representative].filter(Boolean).join(' '));
+      if (p === 'department') lines.push(is.departmentName || '');
+    }
+    if (p === 'custom') { lines = String(d.customIssuerFooter || '').split('\n'); mode = d.customIssuerMark === 'signature' ? 'signature' : 'seal'; }
+    d.issuerFooter = lines.filter(function (s) { return s.trim(); }).join('\n');
+    d.issuerFooterEn = p === 'custom' ? (d.customIssuerFooterEn || d.issuerFooter) : d.issuerFooter;
+    d.issuerMark = mode;
+    d.issuerMarkLabel = mode === 'signature' ? 'Signature / Seal' : (/^english/.test(p) ? 'Seal' : '직인');
+    d.issuerPresetLabel = issuerPresets(key).filter(function (v) { return v[0] === p; })[0][1];
+  }
+  function missingIssuerFooter(d, settings) {
+    if (!d.issuerPreset || d.issuerPreset === 'legacy') return '';
+    if (d.issuerPreset === 'department' && !settings.issuers[d.issuer].departmentName) return '화면 문구 설정에서 담당부서 이름을 입력해 주세요.';
+    if (d.issuerPreset === 'pastor' && !(d.representative || settings.issuers[d.issuer].representative)) return '담임목사 이름을 입력해 주세요.';
+    if (!String(d.issuerFooter || '').trim()) return '사용자 지정 발급 명의를 입력해 주세요.';
+    return '';
+  }
+
   function blankDirect() {
     var is = S.issuers[A.org];
     return { issuer: A.org, category: A.org === 'lm' ? '승인서' : '공문', heading: A.org === 'lm' ? '승인서' : '', docTitle: '', recipient: '', reference: '', subject: '', body: '',
-      representativeTitle: is.representativeTitle, representative: is.representative, note: '' };
+      representativeTitle: is.representativeTitle, representative: is.representative, issuerPreset: 'institution', note: '' };
   }
 
   function openDirect(id, toPrint) {
@@ -1459,6 +1496,7 @@ var BOOT = {
   }
   function renderDirectEditor() {
     var x = A.doc, d = x.doc, cats = A.directCats || ['증명서', '추천서', '승인서', '공문', '기타'];
+    if (!d.issuerPreset) d.issuerPreset = 'legacy';
     var f = function (key, label, ph, opt) {
       opt = opt || {};
       return '<label class="field' + (opt.full ? ' full' : '') + '"><span>' + esc(label) + (opt.req ? ' <b class="req">*</b>' : '') + '</span>' +
@@ -1482,6 +1520,14 @@ var BOOT = {
           f('subject', '제목', '공문 제목', { req: true, full: true }) +
           f('body', '본문', '', { req: true, full: true, area: 18,
             help: '“가. 나.”로 시작하는 줄은 소제목, “- ”로 시작하는 줄은 목록으로 정리됩니다. **글자**처럼 감싸면 굵게 표시됩니다. 마지막에 “끝.”은 자동으로 붙습니다.' }) +
+          '<label class="field full"><span>발급 명의</span><select class="ctl" data-k="issuerPreset" id="issuerPreset">' +
+            (d.issuerPreset === 'legacy' ? '<option value="legacy" selected>기존 서명부 유지</option>' : '') +
+            issuerPresets(d.issuer).map(function (p) { return '<option value="' + p[0] + '"' + (d.issuerPreset === p[0] ? ' selected' : '') + '>' + esc(p[1]) + '</option>'; }).join('') + '</select></label>' +
+          '<div class="full" id="issuerFooterSummary" style="white-space:pre-line"></div>' +
+          '<div class="full" id="customIssuerFields"><div class="grid2">' +
+            f('customIssuerFooter', '사용자 지정 발급 명의', '줄마다 표시할 명의를 입력하세요.', { area: 4 }) +
+            f('customIssuerFooterEn', '사용자 지정 발급 명의 (영문)', '비워 두면 같은 명의를 사용합니다.', { area: 4 }) +
+            '<label class="field"><span>날인·서명 방식</span><select class="ctl" data-k="customIssuerMark"><option value="seal">직인</option><option value="signature"' + (d.customIssuerMark === 'signature' ? ' selected' : '') + '>Signature / Seal</option></select></label></div></div>' +
           f('representativeTitle', '대표자 직함', '예: 대표') +
           f('representative', '대표자 이름', '예: 스캇 브래너 (Scott Brenner)') +
           '<div class="full"><h2>영문본</h2><p class="help">한글본과 같은 문서로 저장됩니다. 두 언어를 함께 검토하고 같은 문서번호로 발급합니다.</p></div>' +
@@ -1499,6 +1545,14 @@ var BOOT = {
       '</section>');
     bindLogout();
     document.getElementById('toDirect').addEventListener('click', loadDirect);
+    var refreshIssuer = function () {
+      readDirectForm();
+      document.getElementById('customIssuerFields').hidden = d.issuerPreset !== 'custom';
+      var summary = document.getElementById('issuerFooterSummary');
+      summary.textContent = d.issuerPreset === 'legacy' ? '' : (d.issuerFooter || '') + '\n' + (d.issuerMarkLabel || '') + (missingIssuerFooter(d, S) ? '\n' + missingIssuerFooter(d, S) : '');
+    };
+    root.querySelectorAll('[data-k]:not([data-k="category"])').forEach(function (el) { el.addEventListener('change', refreshIssuer); });
+    refreshIssuer();
     var catSel = root.querySelector('[data-k=category]'), headIn = root.querySelector('[data-k=heading]');
     catSel.addEventListener('change', function () {
       // 큰 제목이 비었거나 이전 구분 이름 그대로면 새 구분 이름으로 바꿉니다 (공문·기타는 비웁니다)
@@ -1511,6 +1565,8 @@ var BOOT = {
     document.getElementById('dPreview').addEventListener('click', function () {
       readDirectForm();
       var miss = [['docTitle', '문서명'], ['recipient', '수신'], ['subject', '제목'], ['body', '본문']].filter(function (m) { return !d[m[0]].trim(); });
+      var issuerError = missingIssuerFooter(d, S);
+      if (issuerError) { showErr('dErr', issuerError); return; }
       if (miss.length) { showErr('dErr', miss.map(function (m) { return m[1]; }).join(', ') + '을(를) 입력해 주세요.'); return; }
       saveDirect().then(renderDirectPrint, function () {});
     });
@@ -1528,6 +1584,7 @@ var BOOT = {
     var d = A.doc.doc;
     d.bilingual = '1';
     root.querySelectorAll('[data-k]').forEach(function (el) { d[el.getAttribute('data-k')] = el.value; });
+    resolveIssuerFooter(d, S);
   }
 
   function saveDirect() {
@@ -1537,6 +1594,7 @@ var BOOT = {
     var e = document.getElementById('dErr'); if (e) e.classList.add('hidden');
     return run('adminDirectSave', A.token, A.doc.id || null, A.doc.doc).then(function (res) {
       A.doc.id = res.id;
+      if (res.doc) A.doc.doc = res.doc;
       btns.forEach(function (b) { b.disabled = false; });
     }, function (err) {
       btns.forEach(function (b) { b.disabled = false; });
@@ -1604,6 +1662,8 @@ var BOOT = {
     bindPdfUpload(x.number);
     var ib = document.getElementById('dIssue');
     if (ib) ib.addEventListener('click', function () {
+      var issuerError = missingIssuerFooter(d, S);
+      if (issuerError) { toast(issuerError); return; }
       var missing = d.bilingual === '1' ? missingEnglishDirect(d) : [];
       if (missing.length) { toast(missing.map(function (m) { return m[1]; }).join(', ') + '을(를) 입력한 뒤 두 언어를 확인해 주세요.'); return; }
       if (ib.getAttribute('data-sure') !== '1') {
@@ -1680,11 +1740,19 @@ var BOOT = {
       '<div class="body compact' + (d.heading ? '' : ' no-title') + '">' + fieldTable(rows, true) +
         '<div class="lbody">' + letterBody(d.body || (en ? '[English version has not yet been entered.]' : ''), en ? '' : S.direct.closing) + '</div>' +
         '<div class="issuer lsign"><p class="date"><span>' + esc(en ? 'Date' : (oc ? oc.issueDateLabel : '발급일')) + '</span>' + (number ? (en ? todayEn() : todayKo()) : (en ? 'Assigned upon issuance' : '발급 확정일')) + '</p>' +
-        '<div class="signer"><span>' + esc(is.name) + ' ' + esc(d.representativeTitle || (en ? '' : is.representativeTitle)) + '</span><strong>' + esc(d.representative || (en ? '' : is.representative)) + '</strong>' +
-        (number ? '' : seal(en ? 'Official\nSeal' : (oc ? oc.sealLabel : '직인\n위치'))) + '</div></div>' +
+        directIssuerSignature(d, number, en, is, oc) + '</div>' +
       '</div>' +
       (!number ? draftNotice(en) : '') +
       (foot.length ? '<footer class="sheet-foot"><strong>' + esc(is.name) + '</strong> · ' + foot.map(esc).join(' · ') + '</footer>' : '') + '</article>';
+  }
+  function directIssuerSignature(d, number, en, is, oc) {
+    if (d.issuerPreset && d.issuerPreset !== 'legacy') {
+      return '<div class="signer preset-signer"><div>' + String((en ? d.issuerFooterEn : d.issuerFooter) || '').split('\n').map(function (line, i) {
+        return '<div' + (i ? '' : ' style="font-weight:700"') + '>' + esc(line) + '</div>';
+      }).join('') + '</div>' + (number ? '' : seal(d.issuerMarkLabel || '직인')) + '</div>';
+    }
+    return '<div class="signer"><span>' + esc(is.name) + ' ' + esc(d.representativeTitle || (en ? '' : is.representativeTitle)) + '</span><strong>' + esc(d.representative || (en ? '' : is.representative)) + '</strong>' +
+      (number ? '' : seal(en ? 'Official\nSeal' : (oc ? oc.sealLabel : '직인\n위치'))) + '</div>';
   }
   function dotDate(d) { return d.getFullYear() + '. ' + (d.getMonth() + 1) + '. ' + d.getDate() + '.'; }
 
@@ -1894,3 +1962,5 @@ var BOOT = {
 </script>
 </body>
 </html>
+
+
