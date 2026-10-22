@@ -425,9 +425,10 @@ var BOOT = {
 
   // ── 문서별 입력 항목 (원래 사이트와 동일) ─────────────
   var CATEGORY_DOCS = [
-    { category: 'member', ids: ['attendance', 'membership', 'dedication', 'baptism', 'donation'] },
+    { category: 'member', ids: ['attendance', 'membership', 'dedication', 'baptism'] },
     { category: 'recommendation', ids: ['seniorPastor', 'minister', 'memberRecommendation'] },
-    { category: 'employment', ids: ['employment', 'career', 'retirement'] }
+    { category: 'employment', ids: ['employment', 'career', 'retirement'] },
+    { category: 'other', ids: ['donation'] }
   ];
   function recDefs() {
     return [
@@ -556,7 +557,7 @@ var BOOT = {
     }).filter(function (g) { return g.ids.length; });
 
     var docsHtml = groups.length ? groups.map(function (g) {
-      return '<fieldset class="cat"><legend>' + esc(S.categories[g.category]) + '</legend><div class="doc-grid">' +
+      return '<fieldset class="cat"><legend>' + esc(g.category === 'other' ? (S.categories.other || '기타') : S.categories[g.category]) + '</legend><div class="doc-grid">' +
         g.ids.map(function (id) {
           var d = S.documents[id];
           return '<label class="doc" data-doc="' + id + '"><input type="radio" name="documentType" value="' + id + '">' +
